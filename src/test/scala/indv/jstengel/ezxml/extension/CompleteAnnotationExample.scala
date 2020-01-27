@@ -51,7 +51,7 @@ object ExampleTest extends App {
     }, 1414)
     
     println("''''''''''")
-    println(fe.xml.toPrettyXMLString)
+//    println(fe.xml.toPrettyXMLString)
     println(fe.publicStuff)
     println(CompleteAnnotationExample.get(fe))
     println("''''''''''")

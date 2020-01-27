@@ -75,7 +75,7 @@ object CTConverter {
                                scala.xml.Null,
                                scala.xml.TopScope,
                                false,
-                               $i.iterator.map(e => app.xml.CTConverter.compileXML(e)).toSeq: _*)
+                               $i.iterator.map(e => indv.jstengel.ezxml.extension.macros.CTConverter.compileXML(e)).toSeq: _*)
             """) // todo mapping einfügen
         }
     }
@@ -103,7 +103,7 @@ object CTConverter {
                            scala.xml.Null,
                            scala.xml.TopScope,
                            false,
-                           $l.map(e => app.xml.CTConverter.compileXML(e)).toIndexedSeq: _*)
+                           $l.map(e => indv.jstengel.ezxml.extension.macros.CTConverter.compileXML(e)).toIndexedSeq: _*)
         """) // todo mapping einfügen
     }
     
@@ -197,7 +197,7 @@ object CTConverter {
                          else
                              q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
                                  scala.xml.Elem(prefix, label, attribs, scope, false, child ++
-                                                app.xml.CTConverter.compileXML($fieldCall, ${fName.toString}): _*)"""
+                                                indv.jstengel.ezxml.extension.macros.CTConverter.compileXML($fieldCall, ${fName.toString}): _*)"""
                      }
             )
         }
@@ -228,13 +228,13 @@ object CTConverter {
 //            q"(_: String, _: String) => None")
 //        )
 //        c.Expr[Elem](q"""
-//            app.xml.RTConverter.convertToXML($a, $mapping, ${fieldName.getOrElse(c.Expr[String](q"null"))})
+//            indv.jstengel.ezxml.extension.macros.RTConverter.convertToXML($a, $mapping, ${fieldName.getOrElse(c.Expr[String](q"null"))})
 //        """)
 //    }
     def createRuntimeConversion[A] (c : blackbox.Context)
                                    (a : c.Expr[A],
                                     fieldName : c.Expr[String])
                                    (implicit ATag: c.WeakTypeTag[A]): c.Expr[Elem] = { import c.universe._
-        c.Expr[Elem](q"""app.xml.RTConverter.convertToXML($a, pre = $fieldName)""")
+        c.Expr[Elem](q"""indv.jstengel.ezxml.extension.reflection.RTConverter.convertToXML($a, pre = $fieldName)""")
     }
 }
