@@ -1,7 +1,7 @@
 package indv.jstengel.ezxml
 
 import ClassLoadingTest._
-import core.SimpleWrapper.{ElemWrapper, NodeWrapper}
+//import core.SimpleWrapper.{ElemWrapper, NodeWrapper}
 import extension.ExtensionWrapper.{ObjWrapper, ElemWrapper}
 import indv.jstengel.ezxml.extension.macros.Xml
 import org.junit.runner.RunWith
@@ -143,7 +143,7 @@ object quicktest extends App {
 //    println(new AnnotatedIntList(1, 2, 3, 4, 5, 6).xml.obj[AnnotatedIntList])
 //    println(ccIntList(1, 2, 3, 4, 5, 6).xml.toPrettyXMLString)
 //    println(ccIntList(1, 2, 3, 4, 5, 6).xml.obj[ccIntList])
-    
+    println(new NonEmpty())
 }
 
 //object VarArgsTest extends App {

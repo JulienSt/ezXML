@@ -20,12 +20,8 @@ object ExtensionWrapper {
         def obj[T](implicit tt : TypeTag[T], ct: ClassTag[T]): Try[T] = Try(RTLoader.load[T](elem))
     }
     implicit class ObjWrapper[T](t: T)(implicit tt : TypeTag[T], ct : ClassTag[T]) {
-//        def xml: Elem = CTConverter.compileXML(t) todo in funktion umwandeln xml(obj)
         def xml: Elem = convertToXML(t)
-        //        def xml: Elem = Converter.convertToXML(t, (_, _) => None)
-//        def xml(prefix: String): Elem = CTConverter.compileXML(t, prefix)
         def xml(prefix: String): Elem = convertToXML(t, pre = prefix)
-        //        def xml(prefix: String): Elem = Converter.convertToXML(t, (_, _) => None, prefix)
         def xml(mapFieldName: (String, String) => Option[String]): Elem = convertToXML(t, mapFieldName)
     }
 }

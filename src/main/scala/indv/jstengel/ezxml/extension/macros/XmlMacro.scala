@@ -21,14 +21,16 @@ object XMLMacro {
         val result = annottees map ( _.tree ) match {
             case q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns }
                      with ..$parents { $self => ..$stats } """ :: tail =>
+                
+                //todo
+                val newParents = q"""indv.jstengel.ezxml.extension.XmlCapable""" :: parents.asInstanceOf[List[Tree]]
+                
     
                 /* retrieve all the fields outside the constructor with annotations */
                 val newStats = stats.asInstanceOf[List[Tree]].map{
                     case stat @ q"$mods val $fieldName: $tpt = $expr" =>
             
                         val originalMods = mods.asInstanceOf[Modifiers]
-//                        println(fieldName + " : ")
-            
                         val newMods = Modifiers(originalMods.flags | Flag.LAZY,
                                                 originalMods.privateWithin,
                                                 originalMods.annotations)
@@ -52,7 +54,7 @@ object XMLMacro {
                         if ( annotations.exists(_._1.toString.contains(SimpleAnnotations.cacheAnnot)) ) {
                             Some(fieldName -> annotations)
                             val newTerm      = TermName(s"__${ fieldName.toString }Cache")
-                            val xmlExpansion = q"indv.jstengel.ezxml.extension.macros.CTConverter.compileXML($fieldName, ${ fieldName.toString })"
+                            val xmlExpansion = q"indv.jstengel.ezxml.extension.macros.CTConverter.xml($fieldName, ${ fieldName.toString })"
                 
                             val newDefinitions =
                                 if ( isTypeDefined(tpt) )
@@ -88,7 +90,7 @@ object XMLMacro {
                 
                 q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents {
                         $self =>
-                        def toXML : scala.xml.Elem = indv.jstengel.ezxml.extension.macros.CTConverter.compileXML(this)
+                        def toXML : scala.xml.Elem = indv.jstengel.ezxml.extension.macros.CTConverter.xml(this)
                         ..${newStats.flatMap(_._1)}
                     }
                     ..$tail"""
@@ -101,7 +103,7 @@ object XMLMacro {
 //                }"""
 //            case q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$body }" :: _ =>
 //                q"""$mods object $tname extends { ..$earlydefns } with ..$parents { $self =>
-//                    def toXML : Elem = Converter.compileXML(this)
+//                    def toXML : Elem = Converter.xml(this)
 //                    ..$body
 //                }"""
             case q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$body }" :: _ =>
@@ -154,7 +156,7 @@ object XMLMacro {
 //                if ( annotations.exists(_._1.toString.contains(SimpleAnnotations.cacheAnnot)) ) {
 //                    Some(fieldName -> annotations)
 //                    val newTerm      = TermName(s"__${ fieldName.toString }Cache")
-//                    val xmlExpansion = q"app.xml.CTConverter.compileXML($fieldName, ${ fieldName.toString })"
+//                    val xmlExpansion = q"app.xml.CTConverter.xml($fieldName, ${ fieldName.toString })"
 //
 //                    val newDefinitions =
 //                        if ( isTypeDefined(tpt) )

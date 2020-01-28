@@ -11,7 +11,7 @@ object CTConverter {
     
     /* ============================================ Iterator Conversion ============================================ */
     
-    def compileXML[A, I[_] <: IterableOnce[_]] (i : I[A]): Elem = macro convertSeqImpl[A, I]
+    def xml[A, I[_] <: IterableOnce[_]] (i : I[A]): Elem = macro convertSeqImpl[A, I]
     def convertSeqImpl[A, I[_] <: IterableOnce[_]] (c : blackbox.Context)
                                                    (i : c.Expr[I[A]])
                                                    (implicit ITag: c.WeakTypeTag[I[A]],
@@ -20,7 +20,7 @@ object CTConverter {
     
     /* --- */
     
-    def compileXML[A, I[_] <: IterableOnce[_]] (i : I[A], fieldName : String): Elem = macro convertSeqAsFieldImpl[A, I]
+    def xml[A, I[_] <: IterableOnce[_]] (i : I[A], fieldName : String): Elem = macro convertSeqAsFieldImpl[A, I]
     def convertSeqAsFieldImpl[A, I[_] <: IterableOnce[_]] (c : blackbox.Context)
                                                           (i : c.Expr[I[A]], fieldName : c.Expr[String])
                                                           (implicit ITag: c.WeakTypeTag[I[A]],
@@ -29,7 +29,7 @@ object CTConverter {
     
     /* --- */
     
-    def compileXML[A, I[_] <: IterableOnce[_]] (i : I[A],
+    def xml[A, I[_] <: IterableOnce[_]] (i : I[A],
                                                 mapFieldNames : (String, String) => Option[String]): Elem =
         macro convertSeqWithMappingImpl[A, I]
     def convertSeqWithMappingImpl[A, I[_] <: IterableOnce[_]] (c : blackbox.Context)
@@ -41,7 +41,7 @@ object CTConverter {
     
     /* --- */
     
-    def compileXML[A, I[_] <: IterableOnce[_]] (i             : I[A],
+    def xml[A, I[_] <: IterableOnce[_]] (i             : I[A],
                                                 mapFieldNames : (String, String) => Option[String],
                                                 fieldName     : String) : Elem = macro convertSeqWithAllImpl[A, I]
     def convertSeqWithAllImpl[A, I[_] <: IterableOnce[_]] (c : blackbox.Context)
@@ -75,15 +75,15 @@ object CTConverter {
                                scala.xml.Null,
                                scala.xml.TopScope,
                                false,
-                               $i.iterator.map(e => indv.jstengel.ezxml.extension.macros.CTConverter.compileXML(e)).toSeq: _*)
+                               $i.iterator.map(e => indv.jstengel.ezxml.extension.macros.CTConverter.xml(e)).toSeq: _*)
             """) // todo mapping einfügen
         }
     }
     
     /* ============================================= Array Conversion ============================================== */
     
-    def compileXML[A] (l: Array[A]): Elem = macro convertArrayImpl[A]
-    def compileXML[A] (l: Array[A], fieldName: String): Elem = macro convertArrayAsFieldImpl[A]
+    def xml[A] (l: Array[A]): Elem = macro convertArrayImpl[A]
+    def xml[A] (l: Array[A], fieldName: String): Elem = macro convertArrayAsFieldImpl[A]
     
     def convertArrayImpl[A] (c: blackbox.Context)
                             (l: c.Expr[Array[A]])
@@ -103,16 +103,16 @@ object CTConverter {
                            scala.xml.Null,
                            scala.xml.TopScope,
                            false,
-                           $l.map(e => indv.jstengel.ezxml.extension.macros.CTConverter.compileXML(e)).toIndexedSeq: _*)
+                           $l.map(e => indv.jstengel.ezxml.extension.macros.CTConverter.xml(e)).toIndexedSeq: _*)
         """) // todo mapping einfügen
     }
     
     /* =========================================== Arbitrary Conversion ============================================ */
     
-    def compileXML[A] (a: A): Elem = macro convertImpl[A]
-    def compileXML[A] (a: A, mapFieldNames: (String, String) => Option[String]): Elem = macro convertWithMappingImpl[A]
-    def compileXML[A] (a: A, fieldName: String): Elem = macro convertWithFieldImpl[A]
-    def compileXML[A] (a             : A,
+    def xml[A] (a: A): Elem = macro convertImpl[A]
+    def xml[A] (a: A, mapFieldNames: (String, String) => Option[String]): Elem = macro convertWithMappingImpl[A]
+    def xml[A] (a: A, fieldName: String): Elem = macro convertWithFieldImpl[A]
+    def xml[A] (a             : A,
                        mapFieldNames : (String, String) => Option[String],
                        fieldName     : String) : Elem = macro convertWithAllImpl[A]
     
@@ -197,7 +197,7 @@ object CTConverter {
                          else
                              q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
                                  scala.xml.Elem(prefix, label, attribs, scope, false, child ++
-                                                indv.jstengel.ezxml.extension.macros.CTConverter.compileXML($fieldCall, ${fName.toString}): _*)"""
+                                                indv.jstengel.ezxml.extension.macros.CTConverter.xml($fieldCall, ${fName.toString}): _*)"""
                      }
             )
         }
