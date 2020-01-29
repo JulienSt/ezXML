@@ -25,7 +25,7 @@ object RTConverter {
     import ru._
     private implicit val rm: Mirror = rt.currentMirror
     
-    type XmlCapable = { def toXML: Elem }
+    type XmlCapable = { def saveAsXml: Elem }
     
     // fieldNameMap
     // classNameMap
@@ -35,7 +35,8 @@ object RTConverter {
                          pre : String = null)
                         (implicit tt : TypeTag[A], ct : ClassTag[A]) : Elem = {
         try {
-            val Elem(_, l, att, s, c @ _*) = a.asInstanceOf[XmlCapable].toXML
+            val Elem(_, l, att, s, c @ _*) = a.asInstanceOf[XmlCapable].saveAsXml
+            println("fone")
             Elem(pre, l, att, s, true, c: _*)
         }
         catch { case _ : Throwable =>

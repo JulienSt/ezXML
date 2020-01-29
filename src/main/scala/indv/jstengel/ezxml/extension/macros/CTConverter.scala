@@ -2,9 +2,13 @@ package indv.jstengel.ezxml.extension.macros
 
 
 import scala.language.experimental.macros
+import scala.language.higherKinds
 import scala.reflect.macros.blackbox
 import scala.xml.Elem
 import indv.jstengel.ezxml.extension.macros.SimpleAnnotations.isValid
+import indv.jstengel.ezxml.extension.macros.CompileTimeReflectHelper.{isSimple, mapNameAsExpr}
+
+
 
 // https://stackoverflow.com/questions/18450203/retrieve-the-name-of-the-value-a-scala-macro-invocation-will-be-assigned-to
 object CTConverter {
@@ -200,22 +204,6 @@ object CTConverter {
                                                 indv.jstengel.ezxml.extension.macros.CTConverter.xml($fieldCall, ${fName.toString}): _*)"""
                      }
             )
-        }
-    }
-    
-    
-    private def isSimple(c : blackbox.Context)(t: c.universe.Type) =
-        t <:< c.weakTypeOf[AnyVal] || t <:< c.weakTypeOf[String] || t <:< c.weakTypeOf[Number]
-    
-    private def mapNameAsExpr[A] (c : blackbox.Context)
-                                 (mapFieldNames : Option[c.Expr[(String, String) => Option[String]]],
-                                  fieldName     : Option[c.Expr[String]],
-                                  typeAsExpr    : c.Expr[String]) : c.Expr[String] = { import c.universe._
-        (fieldName, mapFieldNames) match {
-            case (None, _)                            => c.Expr[String](q"null")
-            case (Some(fieldName), None)              => c.Expr[String](q"$fieldName")
-            case (Some(fieldName), Some(mappingExpr)) =>
-                c.Expr[String](q"""$mappingExpr($typeAsExpr, $fieldName).getOrElse($fieldName)""")
         }
     }
     

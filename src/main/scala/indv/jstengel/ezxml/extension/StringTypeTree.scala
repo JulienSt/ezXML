@@ -7,7 +7,7 @@ import scala.reflect.runtime.universe.{Mirror, Type, TypeRef, internal}
 import internal.typeRef
 
 private[ezxml] class StringTypeTree (parentType : String, val typeParams : List[StringTypeTree]) {
-    def toType (implicit rm : Mirror) : Type =
+    private def toType (implicit rm : Mirror) : Type =
         if ( typeParams.isEmpty )
             loadTypeFromClassName(parentType)
         else
@@ -18,7 +18,7 @@ private[ezxml] class StringTypeTree (parentType : String, val typeParams : List[
 
 private[ezxml] object StringTypeTree {
     
-    def apply (s : String) : StringTypeTree = {
+    private def apply (s : String) : StringTypeTree = {
         if ( s.isEmpty ) throw new Exception
         val (rootType, xmlTypeParamsAsString) = s.span(_ != '[')
         val buf                               = mutable.Buffer[String]()

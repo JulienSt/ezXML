@@ -1,7 +1,5 @@
-package indv.jstengel.ezxml.extension
+package indv.jstengel.ezxml.extension.macros
 
-
-import indv.jstengel.ezxml.extension.macros.Xml
 
 object XMLAnnoTest extends App{
     

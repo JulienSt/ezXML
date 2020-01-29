@@ -32,7 +32,16 @@ object RTLoader {
 //        import app.xml.XMLWrapper.NodeWrapper
 //        println(elem.toPrettyXMLString)
 //        println(loadedType)
-    
+        
+        println(loadedSymbol.asClass
+                            .companion
+                            .typeSignature
+                            .members
+                            .exists{
+                                case m : MethodSymbol => m.name.toString == "loadFromXML"
+                                case _ => false
+                            })
+        
         if ( loadedSymbol.isModuleClass )
             rm.reflectModule(loadedSymbol.owner.typeSignature.member(loadedSymbol.name.toTermName).asModule).instance
     

@@ -1,6 +1,4 @@
-package indv.jstengel.ezxml.extension
-
-import indv.jstengel.ezxml.extension.macros._
+package indv.jstengel.ezxml.extension.macros
 
 
 abstract class Bla {

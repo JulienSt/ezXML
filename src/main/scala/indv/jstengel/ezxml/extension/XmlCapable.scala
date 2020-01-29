@@ -7,4 +7,3 @@ import scala.xml.Elem
 trait XmlCapable {
     def saveAsXml : Elem
 }
-

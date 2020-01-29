@@ -1,9 +1,9 @@
-package indv.jstengel.ezxml
+package indv.jstengel.ezxml.extension
 
 import ClassLoadingTest._
 //import core.SimpleWrapper.{ElemWrapper, NodeWrapper}
-import extension.ExtensionWrapper.{ObjWrapper, ElemWrapper}
-import indv.jstengel.ezxml.extension.macros.Xml
+import ExtensionWrapper.{ElemWrapper, ObjWrapper}
+import macros.Xml
 import org.junit.runner.RunWith
 import org.scalatest.FlatSpec
 import org.scalatestplus.junit.JUnitRunner
@@ -11,7 +11,6 @@ import org.scalatestplus.junit.JUnitRunner
 import scala.collection.mutable
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
-import scala.util.Try
 
 trait BasicLoadTest { this: FlatSpec =>
     def test[A](a: A)(implicit tt : TypeTag[A], ct : ClassTag[A]): Unit = {
@@ -136,6 +135,8 @@ object quicktest extends App {
 //    import ru._
 //    private implicit val rm: Mirror = rt.currentMirror
     
+    
+    
     // todo entweder annotation anpassen oder irgendwie rausfiltern/herausfinden, dass es varargs gibt und dann so speichern
 //    println(new IntList(1, 2, 3, 4, 5, 6).xml.toPrettyXMLString)
 //    println(new IntList(1, 2, 3, 4, 5, 6).xml.obj[IntList])
@@ -143,7 +144,7 @@ object quicktest extends App {
 //    println(new AnnotatedIntList(1, 2, 3, 4, 5, 6).xml.obj[AnnotatedIntList])
 //    println(ccIntList(1, 2, 3, 4, 5, 6).xml.toPrettyXMLString)
 //    println(ccIntList(1, 2, 3, 4, 5, 6).xml.obj[ccIntList])
-    println(new NonEmpty())
+//    println(new NonEmpty())
 }
 
 //object VarArgsTest extends App {
