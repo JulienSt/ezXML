@@ -106,12 +106,8 @@ object SimpleWrapper {
     implicit class NodeWrapper (node: Node) {
         def toPrettyXMLString : String = pp.format(node)
     }
+    
     implicit class NodeSeqWrapper(seq: NodeSeq) {
         def toPrettyXMLString : String = seq.map(pp.format(_)).mkString("\n")
-    }
-    
-    implicit class TextWrapper (text: Text) {
-        def obj: String = text.text // todo check if this is really needed
-        //  maybe in combination with the reflective type { def obj } ?
     }
 }

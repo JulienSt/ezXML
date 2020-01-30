@@ -29,18 +29,14 @@ object CompleteAnnotationExample {
     def get(fe: CompleteAnnotationExample) = fe.__someHardCalculationCache
 }
 
-// hier sollte dann automatisch ein companion-objekt erstellt werden, sofern noch keins existiert
-// in dieses wird dann eine Ladefunktion zur Compile-Time erstellt
-// dann sollte man demnach ein macro erstellen können, das dann auf diese Funktion verweist, anstatt zur runtime zu laden
 
-
-// todo in tests alle versionen des Imports für die annotations testen. also:
+// todo also test:
 //  app.xml.SubstituteXML
 //  xml.SubstituteXML
 //  SubstituteXML
 
 
-// todo test schreiben, der test, dass nicht mehr als ein mal die gleiche annotation genutzt werden kann
+// todo test that annotations can be used more than once
 
 object ExampleTest extends App {
     

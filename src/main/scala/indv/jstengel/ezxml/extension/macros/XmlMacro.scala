@@ -22,10 +22,6 @@ object XMLMacro {
             case all @ q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns }
                      with ..$parents { $self => ..$stats } """ :: tail =>
                 
-                //todo it would be nice to also add the necessary trait and not just the method,
-                // but at least right now this does not work
-//                val newParents = parents.asInstanceOf[List[Tree]] ::: List(q"""indv.jstengel.ezxml.extension.XmlCapable""")
-                
                 /* retrieve all the fields outside the constructor with annotations */
                 val newStats = stats.asInstanceOf[List[Tree]].map{
                     case stat @ q"$mods val $fieldName: $tpt = $expr" =>
@@ -54,7 +50,9 @@ object XMLMacro {
                         if ( annotations.exists(_._1.toString.contains(SimpleAnnotations.cacheAnnot)) ) {
                             Some(fieldName -> annotations)
                             val newTerm      = TermName(s"__${ fieldName.toString }Cache")
-                            val xmlExpansion = q"indv.jstengel.ezxml.extension.macros.CTConverter.xml($fieldName, ${ fieldName.toString })"
+                            val xmlExpansion =
+                                q"""indv.jstengel.ezxml.extension.macros.CTConverter.xml($fieldName,
+                                                                                         ${fieldName.toString})"""
                 
                             val newDefinitions =
                                 if ( isTypeDefined(tpt) )

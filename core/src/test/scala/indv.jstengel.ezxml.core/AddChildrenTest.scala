@@ -116,7 +116,6 @@ class MultipleAddTest extends FlatSpec with BasicChangeTest {
 }
 
 /* test that multiple possible nodes lead to one correct addition add, when no predicate is given */
-// todo more thorough testing of this case
 @RunWith(classOf[JUnitRunner])
 class MultipleChoiceAddTest extends FlatSpec with BasicChangeTest {
     override val original : Elem =

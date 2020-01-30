@@ -100,7 +100,7 @@ object CTConverter {
     def convertArray[A](c: blackbox.Context)
                        (l: c.Expr[Array[A]], fieldName: Option[c.Expr[String]])
                        (implicit ATag: c.WeakTypeTag[Array[A]]): c.Expr[Elem] = { import c.universe._
-        println("array: " + ATag.tpe.typeSymbol.fullName)
+//        println("array: " + ATag.tpe.typeSymbol.fullName)
         c.Expr[Elem](q"""
             scala.xml.Elem(${fieldName.getOrElse(c.Expr[String](q"null"))},
                            ${ATag.tpe.typeSymbol.fullName},
@@ -181,13 +181,13 @@ object CTConverter {
                          val fName = TermName(field.name.decodedName.toString)
                          
                          // todo annotations
-                         // todo gucken welche annotatioins tatsächlich zusammen genutzt werden können
-                         //  pattern matching über alle annotations, da sie auch untereinander kombiniert werden können
-                         val annotations = field.annotations.flatMap(_.tree match {
-                             case q"new $tpname($param)" if isValid(tpname.toString()) => Some(tpname, Some(param))
-                             case q"new $tpname"         if isValid(tpname.toString()) => Some(tpname, None)
-                             case _ => None
-                         })
+                         // todo check which annotations can be used together
+                         //  pattern matching through all annotations, since they can be combined
+//                         val annotations = field.annotations.flatMap(_.tree match {
+//                             case q"new $tpname($param)" if isValid(tpname.toString()) => Some(tpname, Some(param))
+//                             case q"new $tpname"         if isValid(tpname.toString()) => Some(tpname, None)
+//                             case _ => None
+//                         })
 //                         println("vvvvvvvvvvvvvvvvvvvvvv Annotations vvvvvvvvvvvvvvvvvvvvvv")
 //                         annotations.foreach(println)
 //                         println("^^^^^^^^^^^^^^^^^^^^^^ Annotations ^^^^^^^^^^^^^^^^^^^^^^")

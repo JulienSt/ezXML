@@ -120,8 +120,7 @@ class ClassLoadingTestApp extends FlatSpec with BasicLoadTest {
 //    }
 
 
-// todo ab hier failures durchtesten und auf korrekten error matchen
-
+    // todo test failures for correct behavior
 //    println(List(2, 3, 4).xml.obj[List[String]])
 //    val i2 = 2
 //    println(i2.xml)
@@ -135,9 +134,7 @@ object quicktest extends App {
 //    import ru._
 //    private implicit val rm: Mirror = rt.currentMirror
     
-    
-    
-    // todo entweder annotation anpassen oder irgendwie rausfiltern/herausfinden, dass es varargs gibt und dann so speichern
+    // todo
 //    println(new IntList(1, 2, 3, 4, 5, 6).xml.toPrettyXMLString)
 //    println(new IntList(1, 2, 3, 4, 5, 6).xml.obj[IntList])
 //    println(new AnnotatedIntList(1, 2, 3, 4, 5, 6).xml.toPrettyXMLString)
@@ -146,28 +143,6 @@ object quicktest extends App {
 //    println(ccIntList(1, 2, 3, 4, 5, 6).xml.obj[ccIntList])
 //    println(new NonEmpty())
 }
-
-//object VarArgsTest extends App {
-//    import scala.reflect.{runtime => rt}
-//    import rt.{universe => ru}
-//    import ru._
-//    private implicit val rm: Mirror = rt.currentMirror
-//
-//    case class ccCurriedVarArgs[A, B](a: A*)(b: B*)
-//    val ccVarArgsTest = ccCurriedVarArgs(1,2,3,4,5)("a", "b", "c", "d")
-//
-//    val reflectedObj  = rm.reflect(ccVarArgsTest)
-////    println(util.Try(ccVarArgsTest.b)) <-- does not work, because b is not made a public member unlike in example 2
-//    println(reflectedObj.symbol.typeSignature)
-//
-//    case class ccCurriedVarArgs2[A, B](a: A*)(val b: B*)
-//    val ccVarArgsTest2 = ccCurriedVarArgs2(1,2,3,4,5)("a", "b", "c", "d")
-//
-//    val reflectedObj2  = rm.reflect(ccVarArgsTest2)
-//    println(ccVarArgsTest2.b)
-//    println(reflectedObj2.symbol.typeSignature)
-//}
-
 
 object ClassLoadingTest {
     
@@ -307,17 +282,15 @@ object ClassLoadingTest {
     case class ccCurriedVarArgs[A, B](a: A*)(val b: B*) // has to be with a val or var to be accessible
     
     
-    //todo fehlt
+    //todo
     class StrangeIterator(id: String, iterator: List[(Int, Int)]) extends Iterator[(Int, Int)] {
         override def hasNext : Boolean = iterator.iterator.hasNext
         override def next () : (Int, Int) = iterator.iterator.next()
     }
     
-    // todo einmal mit einer Menge von Array[Int] testen
-    
+    // todo
     case class ccIntList(i: Int*) extends Iterable[Int] {
         override def iterator : Iterator[Int] = i.iterator
     }
-    
     
 }

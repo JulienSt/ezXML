@@ -35,11 +35,11 @@ object RTConverter {
                          pre : String = null)
                         (implicit tt : TypeTag[A], ct : ClassTag[A]) : Elem = {
         try {
+            /* sadly */
             val Elem(_, l, att, s, c @ _*) = a.asInstanceOf[XmlCapable].saveAsXml
-            println("fone")
             Elem(pre, l, att, s, true, c: _*)
         }
-        catch { case _ : Throwable =>
+        catch { case _ : NoSuchMethodException =>
             val ttType    = getType(a)
             val typeParams = getTypeParams(ttType)
             val className = createStringRepresentation(ttType)(typeParams)
@@ -100,8 +100,7 @@ object RTConverter {
                                              case _: ScalaReflectionException =>
                                                  reflectedObj.reflectMethod(member.asMethod).apply()
                                          }
-
-                                     // todo hier getTypeFromValue hier einsetzen
+                                     
                                      val memberType =
                                          try
                                              rm.reflect(fieldValue).symbol.toType

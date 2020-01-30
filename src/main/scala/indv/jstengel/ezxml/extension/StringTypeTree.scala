@@ -6,8 +6,19 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe.{Mirror, Type, TypeRef, internal}
 import internal.typeRef
 
-private[ezxml] class StringTypeTree (parentType : String, val typeParams : List[StringTypeTree]) {
-    private def toType (implicit rm : Mirror) : Type =
+
+/**
+ *
+ * @param parentType
+ * @param typeParams
+ */
+private class StringTypeTree (parentType : String, val typeParams : List[StringTypeTree]) {
+    /**
+     *
+     * @param rm runtime mirror of the current universe. This is given implicitly to reduce boilerplate
+     * @return
+     */
+    def toType (implicit rm : Mirror) : Type =
         if ( typeParams.isEmpty )
             loadTypeFromClassName(parentType)
         else
@@ -16,8 +27,13 @@ private[ezxml] class StringTypeTree (parentType : String, val typeParams : List[
             }
 }
 
-private[ezxml] object StringTypeTree {
+private[extension] object StringTypeTree {
     
+    /**
+     *
+     * @param s
+     * @return
+     */
     private def apply (s : String) : StringTypeTree = {
         if ( s.isEmpty ) throw new Exception
         val (rootType, xmlTypeParamsAsString) = s.span(_ != '[')
@@ -40,9 +56,22 @@ private[ezxml] object StringTypeTree {
         new StringTypeTree(rootType, if ( buf.nonEmpty ) buf.map(apply).toList else List())
     }
     
+    /**
+     * Reflects a type based upon a given string. This String has to include all necessary information about that type,
+     * including the complete path and all type parameters.
+     * The output of RuntimeReflectHelper.createStringRepresentation is most likely the input for this function
+     * @param s the string representation for a type
+     * @param rm runtime mirror of the current universe. This is given implicitly to reduce boilerplate
+     * @return The correct Type, with all type params based upon the input string
+     */
     def typeFromString (s : String)(implicit rm : Mirror) : Type = StringTypeTree(s).toType
     
-    /* without type params in name */
+    /**
+     * loads a class statically without type params
+     * @param className
+     * @param rm
+     * @return
+     */
     private def loadTypeFromClassName (className : String)(implicit rm : Mirror) : Type =
         try
             rm.staticClass(className).toType

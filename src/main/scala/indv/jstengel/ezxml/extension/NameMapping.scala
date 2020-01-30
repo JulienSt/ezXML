@@ -66,5 +66,5 @@ case class NameMapping (className      : String,
         if (className == other.className){
             ???
         } else
-            Failure(new Exception)  // todo erstelle "class name not match Exception"
+            Failure(new Exception)  // todo create "class name not match Exception"
 }

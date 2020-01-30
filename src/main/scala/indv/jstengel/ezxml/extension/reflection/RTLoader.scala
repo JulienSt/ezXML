@@ -2,7 +2,6 @@ package indv.jstengel.ezxml.extension.reflection
 
 
 import RuntimeReflectHelper._
-import indv.jstengel.ezxml.extension.StringTypeTree
 
 import scala.reflect.ClassTag
 import scala.xml.{Elem, PrefixedAttribute, Text}
@@ -28,31 +27,27 @@ object RTLoader {
     private[ezxml] def load[A] (elem : Elem)(implicit tt : TypeTag[A], ct : ClassTag[A]) : A = {
         val loadedType   = getTypeFromString(elem.label)
         val loadedSymbol = loadedType.typeSymbol
-    
-//        import app.xml.XMLWrapper.NodeWrapper
-//        println(elem.toPrettyXMLString)
-//        println(loadedType)
         
-        println(loadedSymbol.asClass
-                            .companion
-                            .typeSignature
-                            .members
-                            .exists{
-                                case m : MethodSymbol => m.name.toString == "loadFromXML"
-                                case _ => false
-                            })
+//        println(loadedSymbol.asClass
+//                            .companion
+//                            .typeSignature
+//                            .members
+//                            .exists{
+//                                case m : MethodSymbol => m.name.toString == "loadFromXML"
+//                                case _ => false
+//                            })
         
         if ( loadedSymbol.isModuleClass )
             rm.reflectModule(loadedSymbol.owner.typeSignature.member(loadedSymbol.name.toTermName).asModule).instance
     
-        else if ( isCreatedThroughObject(loadedType, loadedSymbol) )
+        else if ( isObject(loadedType, loadedSymbol) )
             rm.reflectModule(loadedSymbol.asClass.companion.asModule).instance
     
         else if ( isSimpleType(loadedType) )
             stringToSimpleValue(elem \@ "value")(tagOf(loadedType))
 
         else if ( loadedType <:< iterableType )
-                 loadIterable(elem, loadedType)
+            loadIterable(elem, loadedType)
     
         else if ( loadedType <:< productType )
             loadProduct(elem, loadedType)
@@ -66,15 +61,34 @@ object RTLoader {
             loadClass(elem, loadedType)
         }.asInstanceOf[A]
     
-    private def loadChildren[A] (elem : Elem, tParam: Type) = {
+    /**
+     * loads all children of a given Elem as a type of tParam
+     * @param elem the elem whose children will be loaded
+     * @param tParam the type the children will be loaded as
+     * @return a Seq[Any] where all elements will be of type tParam at runtime
+     */
+    private def loadChildren (elem : Elem, tParam: Type) : Seq[Any] = {
         elem.child.map{ case elem : Elem => load(elem)(tagOf(tParam), classTagOf(tParam)) }
     }
     
-    private def isCreatedThroughObject[A] (loadedType : Type, loadedSymbol : Symbol) = {
+    /**
+     * @param loadedType the type that is checked if it is an object or not
+     * @param loadedSymbol the symbol corresponding to loadedType
+     *                     (this could be extracted from loaded type, but since this is already done at call site,
+     *                     it is passed as a parameter instead)
+     * @return true if the type corresponds to an object, false if not
+     */
+    @inline private def isObject (loadedType : Type, loadedSymbol : Symbol): Boolean = {
         loadedSymbol.asClass.companion.typeSignature.members.nonEmpty && loadedType.members.isEmpty
     }
     
-    @inline private def loadIterable[A] (elem : Elem, tpe : Type) = {
+    /**
+     * loads an iterable from elem as type tpe and returns it as type Any
+     * @param elem an elem that contains an iterable
+     * @param tpe the type of iterable the elem will be loaded as
+     * @return an iterable of type tpe contained inside an object of type Any
+     */
+    @inline private def loadIterable (elem : Elem, tpe : Type) : Any = {
         val loadedElems = loadChildren(elem, getTypeFromString(elem.label))
         val companionSymbol  = tpe.typeSymbol.asClass.companion
         val companionMembers = companionSymbol.typeSignature.members
@@ -87,7 +101,13 @@ object RTLoader {
                         }
     }
     
-    @inline private def loadProduct[A] (elem : Elem, tpe : Type) = {
+    /**
+     *
+     * @param elem
+     * @param tpe
+     * @return
+     */
+    @inline private def loadProduct (elem : Elem, tpe : Type) : Any = {
         val companionSymbol  =
             try {
                 getTypeFromString(elem.label).typeSymbol.asClass.companion
@@ -102,7 +122,13 @@ object RTLoader {
         apply(loadedParams.flatten:_*)
     }
     
-    @inline private def loadClass (elem : Elem, tpe : Type) = {
+    /**
+     *
+     * @param elem
+     * @param tpe
+     * @return
+     */
+    @inline private def loadClass (elem : Elem, tpe : Type): Any = {
         val (constructor, returnType) = loadConstructor(elem.label)
         if ( tpe <:< returnType || returnType.baseClasses == tpe.baseClasses &&
                                    getTypeParams(returnType).forall(_.baseClasses == minimumBaseClasses) ) {
@@ -113,6 +139,11 @@ object RTLoader {
             throw createException(tpe, returnType)
     }
     
+    /**
+     *
+     * @param className
+     * @return
+     */
     @inline private def loadConstructor (className : String) : (MethodMirror, Type) = {
         val classSymbol = getTypeFromString(className).typeSymbol.asClass
         classSymbol.typeSignature
@@ -122,6 +153,12 @@ object RTLoader {
                    .get
     }
     
+    /**
+     *
+     * @param f
+     * @param elem
+     * @return
+     */
     private def extractParamsForFunctionFromElem (f : ru.MethodMirror, elem : Elem): List[List[Any]] = {
         f.symbol
          .paramLists
@@ -131,7 +168,7 @@ object RTLoader {
                  elem.attributes
                      .collectFirst{
                          case PrefixedAttribute(pre, key, Text(value), _) if key.startsWith(paramName) =>
-                             stringToSimpleValue(value)(tagOf(StringTypeTree.typeFromString(pre)))
+                             stringToSimpleValue(value)(tagOf(getTypeFromString(pre)))
                      }
                      .getOrElse{
                          elem.child
