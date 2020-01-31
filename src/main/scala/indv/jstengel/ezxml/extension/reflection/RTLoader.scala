@@ -27,21 +27,21 @@ object RTLoader {
     private[ezxml] def load[A] (elem : Elem)(implicit tt : TypeTag[A], ct : ClassTag[A]) : A = {
         val loadedType   = getTypeFromString(elem.label)
         val loadedSymbol = loadedType.typeSymbol
+        val companion = loadedSymbol.asClass.companion
         
-//        println(loadedSymbol.asClass
-//                            .companion
-//                            .typeSignature
-//                            .members
-//                            .exists{
-//                                case m : MethodSymbol => m.name.toString == "loadFromXML"
-//                                case _ => false
-//                            })
-        
-        if ( loadedSymbol.isModuleClass )
+        if(companion.typeSignature
+                    .members
+                    .exists{ case m : MethodSymbol => m.name.toString == "loadFromXML" case _ => false})
+            companion.typeSignature
+                     .members
+                     .collectFirst(companionMethodExtraction(companion, "loadFromXML"))
+                     .get(elem)
+
+        else if ( loadedSymbol.isModuleClass )
             rm.reflectModule(loadedSymbol.owner.typeSignature.member(loadedSymbol.name.toTermName).asModule).instance
     
         else if ( isObject(loadedType, loadedSymbol) )
-            rm.reflectModule(loadedSymbol.asClass.companion.asModule).instance
+            rm.reflectModule(companion.asModule).instance
     
         else if ( isSimpleType(loadedType) )
             stringToSimpleValue(elem \@ "value")(tagOf(loadedType))

@@ -1,6 +1,7 @@
 package indv.jstengel.ezxml.extension
 
 import ClassLoadingTest._
+import indv.jstengel.ezxml.extension.macros.CTLoader.obj
 //import core.SimpleWrapper.{ElemWrapper, NodeWrapper}
 import ExtensionWrapper.{ElemWrapper, ObjWrapper}
 import macros.Xml
@@ -15,7 +16,7 @@ import scala.reflect.runtime.universe.TypeTag
 trait BasicLoadTest { this: FlatSpec =>
     def test[A](a: A)(implicit tt : TypeTag[A], ct : ClassTag[A]): Unit = {
         val xml = a.xml
-        s"\n$a as ${tt.tpe}" should s" load with $xml " in {assert(a == xml.obj[A].get)}
+        s"\n$a as ${tt.tpe}" should s" load with $xml at RT" in {assert(a == xml.obj[A].get)}
     }
     def testArray[A](a: Array[A])(implicit tt : TypeTag[Array[A]], ct : ClassTag[Array[A]]): Unit = {
         s"\n$a" should s" load with ${a.xml} " in {
@@ -28,8 +29,10 @@ trait BasicLoadTest { this: FlatSpec =>
 class ClassLoadingTestApp extends FlatSpec with BasicLoadTest {
     val i: java.lang.Integer = 90
     test(i)
+    
     val s: java.lang.String = "TestInput"
     test(s)
+    
     test(EmptyCaseClass())
     test(None)
     test(ClassLoadingTest)
@@ -134,6 +137,7 @@ object quicktest extends App {
 //    import ru._
 //    private implicit val rm: Mirror = rt.currentMirror
     
+    
     // todo
 //    println(new IntList(1, 2, 3, 4, 5, 6).xml.toPrettyXMLString)
 //    println(new IntList(1, 2, 3, 4, 5, 6).xml.obj[IntList])
@@ -142,6 +146,21 @@ object quicktest extends App {
 //    println(ccIntList(1, 2, 3, 4, 5, 6).xml.toPrettyXMLString)
 //    println(ccIntList(1, 2, 3, 4, 5, 6).xml.obj[ccIntList])
 //    println(new NonEmpty())
+
+//    AnnotatedIntList
+    val tree = new NonEmpty(4,
+                        new NonEmpty(6,
+                                     new NonEmpty(19,
+                                                  EmptyIntSet,
+                                                  EmptyIntSet),
+                                     new NonEmpty(90,
+                                                  EmptyIntSet,
+                                                  EmptyIntSet)),
+                        new NonEmpty(13,
+                                     EmptyIntSet,
+                                     EmptyIntSet))
+    println(tree.xml)
+    println(obj[IntSet](tree.xml))
 }
 
 object ClassLoadingTest {
@@ -230,9 +249,9 @@ object ClassLoadingTest {
         override def toString : String = "{" + left + elem + right + "}"
     }
     
-    @Xml class AnnotatedIntList(val i: Int*) extends Iterable[Int] {
-        override def iterator : Iterator[Int] = i.iterator
-    }
+//    @Xml class AnnotatedIntList(val i: Int*) extends Iterable[Int] {
+//        override def iterator : Iterator[Int] = i.iterator
+//    }
     class IntList(val i: Int*) extends Iterable[Int] {
         override def iterator : Iterator[Int] = i.iterator
     }

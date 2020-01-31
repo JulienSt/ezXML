@@ -70,17 +70,21 @@ object XMLMacro {
                 }
                 
                 /* check for companion object */
+//                val newTail = tail
                 val newTail = tail match {
                     case q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$body }" :: _ =>
                         q"""$mods object $tname extends { ..$earlydefns } with ..$parents { $self =>
-                            def loadFromXML: $tpname[..$tparams] = ???
+                                def loadFromXML(elem: scala.xml.Elem) : $tpname[..$tparams] =
+                                    indv.jstengel.ezxml.extension.macros.CTLoader.obj[$tpname[..$tparams]](elem)
                             ..$body
                             }"""
                     case _ =>
                         q"""object ${TermName(tpname.toString)} {
-                                def loadFromXML: $tpname[..$tparams] = ???
+                                def loadFromXML(elem: scala.xml.Elem) : $tpname[..$tparams] =
+                                    indv.jstengel.ezxml.extension.macros.CTLoader.obj[$tpname[..$tparams]](elem)
                             }"""
                 }
+                println(newTail)
                 
                 q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents {
                         $self =>

@@ -162,10 +162,6 @@ object CTConverter {
         else if (aType.typeSymbol.isAbstract)
             createRuntimeConversion(c)(a, mappedName)
         else {
-            val isMacroCallingEnclosingClass =
-                try c.reifyEnclosingRuntimeClass.tpe.toString.contains(fullTypeName)
-                catch {case _: Throwable => false} // todo tighter case
-    
             c.Expr[Elem](
                 aType.decls
                      .collectFirst { case m: MethodSymbol if m.isPrimaryConstructor => m }
@@ -192,7 +188,12 @@ object CTConverter {
 //                         annotations.foreach(println)
 //                         println("^^^^^^^^^^^^^^^^^^^^^^ Annotations ^^^^^^^^^^^^^^^^^^^^^^")
                          
-                         val fieldCall = if(isMacroCallingEnclosingClass) q"$fName" else q"$a.$fName"
+                         val fieldCall =
+                             if(CompileTimeReflectHelper.isMacroCallingEnclosingClass(c, fullTypeName))
+                                 q"$fName"
+                             else
+                                 q"$a.$fName"
+                         
                          if (isSimple(c)(field.typeSignature))
                              q"""$quote % scala.xml.Attribute(${ field.typeSignature.typeSymbol.fullName.toString },
                                                               ${ fName.toString },
@@ -201,13 +202,14 @@ object CTConverter {
                          else
                              q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
                                  scala.xml.Elem(prefix, label, attribs, scope, false, child ++
-                                                indv.jstengel.ezxml.extension.macros.CTConverter.xml($fieldCall, ${fName.toString}): _*)"""
+                                 indv.jstengel.ezxml.extension.macros.CTConverter.xml($fieldCall,
+                                                                                      ${fName.toString}): _*)"""
                      }
             )
         }
     }
     
-//    def createRuntimeConversion[A] (c : blackbox.Context)
+    //    def createRuntimeConversion[A] (c : blackbox.Context)
 //                                   (a : c.Expr[A],
 //                                    mapFieldNames: Option[c.Expr[(String, String) => Option[String]]],
 //                                    fieldName : Option[c.Expr[String]])
@@ -216,7 +218,8 @@ object CTConverter {
 //            q"(_: String, _: String) => None")
 //        )
 //        c.Expr[Elem](q"""
-//            indv.jstengel.ezxml.extension.macros.RTConverter.convertToXML($a, $mapping, ${fieldName.getOrElse(c.Expr[String](q"null"))})
+//            indv.jstengel.ezxml.extension.macros.RTConverter.convertToXML($a, $mapping,
+//            ${fieldName.getOrElse(c.Expr[String](q"null"))})
 //        """)
 //    }
     def createRuntimeConversion[A] (c : blackbox.Context)
