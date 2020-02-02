@@ -1,12 +1,13 @@
-package indv.jstengel.ezxml.extension.macros
+package indv.jstengel.ezxml.extension.ct
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 import scala.xml.Elem
-import indv.jstengel.ezxml.extension.macros.CompileTimeReflectHelper.{isSimple, mapNameAsExpr}
+import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{isSimple, mapNameAsExpr}
 
 
 object CTLoader {
+    
     
     def obj[A]: Elem => A = macro loadObjFromXml[A]
     def loadObjFromXml[A](c : blackbox.Context)
@@ -19,11 +20,24 @@ object CTLoader {
                 c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => (elem \@ "value")""")
             else
                 c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => (elem \@ "value")${ tagToName(c)(ATag) }""")
-            
+
+        else if (aType <:< typeOf[IterableOnce[_]] || aType <:< typeOf[Array[_]]) {
+            val (symbol, tparam) = aType match {
+                case TypeRef(_, symbol, tparam::Nil) => (symbol.fullName, tparam.typeSymbol.fullName)
+            }
+            val treeAsString =
+                s"""(elem: scala.xml.Elem) =>
+                   |    $symbol(elem.child
+                   |                .map{ case elem : scala.xml.Elem =>
+                   |                    indv.jstengel.ezxml.extension.ct.CTLoader.obj[$tparam](elem)
+                   |                }:_*
+                   |           )""".stripMargin
+            c.Expr[Elem => A](c.parse(treeAsString))
+        }
+
         else if (aType.typeSymbol.isAbstract)
-            c.Expr[Elem => A](q"""(elem: scala.xml.Elem) =>
-                indv.jstengel.ezxml.extension.reflection.RTLoader.load[$aType](elem)
-            """)
+            c.Expr[Elem => A](q"""(e: scala.xml.Elem) => indv.jstengel.ezxml.extension.rt.RTLoader.load[$aType](e)""")
+            
         else {
             
             val paramLists = aType.decls
@@ -59,11 +73,11 @@ object CTLoader {
                                                      else
                                                          "." + tagToName(c)(c.WeakTypeTag(fieldType))
                                                  }""".stripMargin
-                                             else
+                                             else // todo "else if repeated" has to be added in this chain
                                                  s"""indv.jstengel
                                                  |    .ezxml
                                                  |    .extension
-                                                 |    .macros
+                                                 |    .ct
                                                  |    .CTLoader
                                                  |    .obj[$fieldType](elem
                                                  |    .child
@@ -78,10 +92,7 @@ object CTLoader {
                         .foldLeft(s"(elem: scala.xml.Elem) => new ${aType.typeSymbol.fullName}"){
                             case (quote : String, listAsQuote : String) => s"$quote$listAsQuote"
                         }
-        
-//                println(treeAsString)
-//                val expr = c.Expr[Elem => A](q"${ c.parse(treeAsString) }")
-                c.Expr[Elem => A](q"${ c.parse(treeAsString) }")
+                c.Expr[Elem => A](c.parse(treeAsString))
             }
         }
     }

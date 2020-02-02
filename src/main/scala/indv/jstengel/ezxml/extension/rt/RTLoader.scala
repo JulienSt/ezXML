@@ -1,4 +1,4 @@
-package indv.jstengel.ezxml.extension.reflection
+package indv.jstengel.ezxml.extension.rt
 
 
 import RuntimeReflectHelper._

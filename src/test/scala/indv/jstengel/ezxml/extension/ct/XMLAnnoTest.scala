@@ -1,4 +1,4 @@
-package indv.jstengel.ezxml.extension.macros
+package indv.jstengel.ezxml.extension.ct
 
 
 //object XMLAnnoTest extends App{

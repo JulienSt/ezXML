@@ -1,4 +1,4 @@
-package indv.jstengel.ezxml.extension.reflection
+package indv.jstengel.ezxml.extension.rt
 
 
 import indv.jstengel.ezxml.extension.StringTypeTree
@@ -22,7 +22,7 @@ import internal.typeRef
  * Everything inside this object is used to aid in runtime reflections and minimize duplicate code between loading and
  * converting objects.
  */
-private[reflection] object RuntimeReflectHelper {
+private[rt] object RuntimeReflectHelper {
     
     private val IntType = typeOf[Int]
     private val DoubleType = typeOf[Double]

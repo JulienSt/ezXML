@@ -1,4 +1,4 @@
-package indv.jstengel.ezxml.extension.macros
+package indv.jstengel.ezxml.extension.ct
 
 import scala.annotation.StaticAnnotation
 

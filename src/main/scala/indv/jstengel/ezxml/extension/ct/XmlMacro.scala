@@ -1,6 +1,6 @@
-package indv.jstengel.ezxml.extension.macros
+package indv.jstengel.ezxml.extension.ct
 
-import indv.jstengel.ezxml.extension.macros.SimpleAnnotations.isValid
+import indv.jstengel.ezxml.extension.ct.SimpleAnnotations.isValid
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
@@ -18,7 +18,7 @@ class Xml extends StaticAnnotation {
 object XMLMacro {
     def impl (c : Context)(annottees : c.Expr[Any]*) : c.Expr[Any] = {
         import c.universe._
-        val result = annottees map ( _.tree ) match {
+        val resultAsTree = annottees map ( _.tree ) match {
             case all @ q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns }
                      with ..$parents { $self => ..$stats } """ :: tail =>
                 
@@ -51,7 +51,7 @@ object XMLMacro {
                             Some(fieldName -> annotations)
                             val newTerm      = TermName(s"__${ fieldName.toString }Cache")
                             val xmlExpansion =
-                                q"""indv.jstengel.ezxml.extension.macros.CTConverter.xml($fieldName,
+                                q"""indv.jstengel.ezxml.extension.ct.CTConverter.xml($fieldName,
                                                                                          ${fieldName.toString})"""
                 
                             val newDefinitions =
@@ -75,20 +75,19 @@ object XMLMacro {
                     case q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$body }" :: _ =>
                         q"""$mods object $tname extends { ..$earlydefns } with ..$parents { $self =>
                                 def loadFromXML(elem: scala.xml.Elem) : $tpname[..$tparams] =
-                                    indv.jstengel.ezxml.extension.macros.CTLoader.obj[$tpname[..$tparams]](elem)
+                                    indv.jstengel.ezxml.extension.ct.CTLoader.obj[$tpname[..$tparams]](elem)
                             ..$body
                             }"""
                     case _ =>
                         q"""object ${TermName(tpname.toString)} {
                                 def loadFromXML(elem: scala.xml.Elem) : $tpname[..$tparams] =
-                                    indv.jstengel.ezxml.extension.macros.CTLoader.obj[$tpname[..$tparams]](elem)
+                                    indv.jstengel.ezxml.extension.ct.CTLoader.obj[$tpname[..$tparams]](elem)
                             }"""
                 }
-                println(newTail)
                 
                 q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents {
                         $self =>
-                        def saveAsXml : scala.xml.Elem = indv.jstengel.ezxml.extension.macros.CTConverter.xml(this)
+                        def saveAsXml : scala.xml.Elem = indv.jstengel.ezxml.extension.ct.CTConverter.xml(this)
                         ..${newStats.flatMap(_._1)}
                     }
                     ..$newTail"""
@@ -99,8 +98,7 @@ object XMLMacro {
                 }"""
             case _ => c.abort(c.enclosingPosition, "Invalid annotation target: not a class")
         }
-//        println(result)
-        c.Expr[Any](result)
+        c.Expr[Any](resultAsTree)
     }
     
     def isTypeDefined(tree: Trees#Tree): Boolean = !tree.toString.contains("<type ?>")

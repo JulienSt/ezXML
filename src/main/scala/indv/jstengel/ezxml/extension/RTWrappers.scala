@@ -1,15 +1,15 @@
 package indv.jstengel.ezxml.extension
 
 
-import indv.jstengel.ezxml.extension.reflection.RTConverter.convertToXML
-import indv.jstengel.ezxml.extension.reflection.RTLoader
+import indv.jstengel.ezxml.extension.rt.RTConverter.convertToXML
+import indv.jstengel.ezxml.extension.rt.RTLoader
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 import scala.util.Try
 import scala.xml.Elem
 
-object ExtensionWrapper {
+object RTWrappers {
     implicit class ElemWrapper (elem : Elem) {
         import scala.reflect.runtime.universe.TypeTag
         /**

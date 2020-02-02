@@ -1,12 +1,12 @@
-package indv.jstengel.ezxml.extension.macros
+package indv.jstengel.ezxml.extension.ct
 
 
 import scala.language.experimental.macros
 import scala.language.higherKinds
 import scala.reflect.macros.blackbox
 import scala.xml.Elem
-import indv.jstengel.ezxml.extension.macros.SimpleAnnotations.isValid
-import indv.jstengel.ezxml.extension.macros.CompileTimeReflectHelper.{isSimple, mapNameAsExpr}
+import indv.jstengel.ezxml.extension.ct.SimpleAnnotations.isValid
+import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{isSimple, mapNameAsExpr}
 
 
 
@@ -79,7 +79,7 @@ object CTConverter {
                                scala.xml.Null,
                                scala.xml.TopScope,
                                false,
-                               $i.iterator.map(e => indv.jstengel.ezxml.extension.macros.CTConverter.xml(e)).toSeq: _*)
+                               $i.iterator.map(e => indv.jstengel.ezxml.extension.ct.CTConverter.xml(e)).toSeq: _*)
             """) // todo mapping einfügen
         }
     }
@@ -107,7 +107,7 @@ object CTConverter {
                            scala.xml.Null,
                            scala.xml.TopScope,
                            false,
-                           $l.map(e => indv.jstengel.ezxml.extension.macros.CTConverter.xml(e)).toIndexedSeq: _*)
+                           $l.map(e => indv.jstengel.ezxml.extension.ct.CTConverter.xml(e)).toIndexedSeq: _*)
         """) // todo mapping einfügen
     }
     
@@ -202,8 +202,7 @@ object CTConverter {
                          else
                              q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
                                  scala.xml.Elem(prefix, label, attribs, scope, false, child ++
-                                 indv.jstengel.ezxml.extension.macros.CTConverter.xml($fieldCall,
-                                                                                      ${fName.toString}): _*)"""
+                                 indv.jstengel.ezxml.extension.ct.CTConverter.xml($fieldCall,${fName.toString}): _*)"""
                      }
             )
         }
@@ -218,7 +217,7 @@ object CTConverter {
 //            q"(_: String, _: String) => None")
 //        )
 //        c.Expr[Elem](q"""
-//            indv.jstengel.ezxml.extension.macros.RTConverter.convertToXML($a, $mapping,
+//            indv.jstengel.ezxml.extension.ct.RTConverter.convertToXML($a, $mapping,
 //            ${fieldName.getOrElse(c.Expr[String](q"null"))})
 //        """)
 //    }
@@ -226,6 +225,6 @@ object CTConverter {
                                    (a : c.Expr[A],
                                     fieldName : c.Expr[String])
                                    (implicit ATag: c.WeakTypeTag[A]): c.Expr[Elem] = { import c.universe._
-        c.Expr[Elem](q"""indv.jstengel.ezxml.extension.reflection.RTConverter.convertToXML($a, pre = $fieldName)""")
+        c.Expr[Elem](q"""indv.jstengel.ezxml.extension.rt.RTConverter.convertToXML($a, pre = $fieldName)""")
     }
 }

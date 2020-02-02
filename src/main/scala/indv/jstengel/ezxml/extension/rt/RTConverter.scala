@@ -1,4 +1,4 @@
-package indv.jstengel.ezxml.extension.reflection
+package indv.jstengel.ezxml.extension.rt
 
 
 import scala.language.reflectiveCalls
@@ -14,7 +14,8 @@ import RuntimeReflectHelper.{arrayType,
     getTypeParams,
     iterableType,
     getTypeFromString,
-    tagOf}
+    tagOf
+}
 
 
 // https://medium.com/@sinisalouc/overcoming-type-erasure-in-scala-8f2422070d20
