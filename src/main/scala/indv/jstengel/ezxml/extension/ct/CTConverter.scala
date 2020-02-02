@@ -2,11 +2,11 @@ package indv.jstengel.ezxml.extension.ct
 
 
 import scala.language.experimental.macros
-import scala.language.higherKinds
 import scala.reflect.macros.blackbox
 import scala.xml.Elem
-import indv.jstengel.ezxml.extension.ct.SimpleAnnotations.isValid
 import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{isSimple, mapNameAsExpr}
+
+import scala.language.higherKinds
 
 
 
@@ -80,7 +80,7 @@ object CTConverter {
                                scala.xml.TopScope,
                                false,
                                $i.iterator.map(e => indv.jstengel.ezxml.extension.ct.CTConverter.xml(e)).toSeq: _*)
-            """) // todo mapping einfügen
+            """) // todo todo include mapping
         }
     }
     
@@ -108,7 +108,7 @@ object CTConverter {
                            scala.xml.TopScope,
                            false,
                            $l.map(e => indv.jstengel.ezxml.extension.ct.CTConverter.xml(e)).toIndexedSeq: _*)
-        """) // todo mapping einfügen
+        """) // todo include mapping
     }
     
     /* =========================================== Arbitrary Conversion ============================================ */
@@ -159,8 +159,26 @@ object CTConverter {
                 scala.xml.Elem($mappedName, $typeAsExpr, scala.xml.Null, scala.xml.TopScope, true, Seq(): _*) %
                     scala.xml.Attribute("value", scala.xml.Text($a.toString()), scala.xml.Null)
             """)
+
+            //todo array
+//        else if (aType <:< typeOf[Array[_]]) {
+//            val (symbol, tparam) = aType match {
+//                case TypeRef(_, symbol, tparam::Nil) => (symbol.fullName, tparam.typeSymbol.fullName)
+//            }
+//            c.Expr[Elem](q"""
+//            scala.xml.Elem(${fieldName.getOrElse(c.Expr[String](q"null"))},
+//                           $symbol[$tparam],
+//                           scala.xml.Null,
+//                           scala.xml.TopScope,
+//                           false,
+//                           $a.map(e => indv.jstengel.ezxml.extension.ct.CTConverter.xml(e)).toIndexedSeq: _*)
+//            """) // todo mapping
+//
+//        }
+        
         else if (aType.typeSymbol.isAbstract)
             createRuntimeConversion(c)(a, mappedName)
+        
         else {
             c.Expr[Elem](
                 aType.decls
@@ -184,7 +202,7 @@ object CTConverter {
 //                             case q"new $tpname"         if isValid(tpname.toString()) => Some(tpname, None)
 //                             case _ => None
 //                         })
-//                         println("vvvvvvvvvvvvvvvvvvvvvv Annotations vvvvvvvvvvvvvvvvvvvvvv")
+//                         println("---------------------- Annotations ----------------------")
 //                         annotations.foreach(println)
 //                         println("^^^^^^^^^^^^^^^^^^^^^^ Annotations ^^^^^^^^^^^^^^^^^^^^^^")
                          
