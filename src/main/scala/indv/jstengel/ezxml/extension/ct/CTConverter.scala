@@ -4,7 +4,8 @@ package indv.jstengel.ezxml.extension.ct
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 import scala.xml.Elem
-import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{isSimple, mapNameAsExpr}
+import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.isSimple
+import indv.jstengel.ezxml.extension.mapping.FieldMappings
 
 import scala.language.higherKinds
 
@@ -34,47 +35,46 @@ object CTConverter {
     /* --- */
     
     def xml[A, I[_] <: IterableOnce[_]] (i : I[A],
-                                                mapFieldNames : (String, String) => Option[String]): Elem =
+                                                mappings : FieldMappings): Elem =
         macro convertSeqWithMappingImpl[A, I]
     def convertSeqWithMappingImpl[A, I[_] <: IterableOnce[_]] (c : blackbox.Context)
-                                                              (i             : c.Expr[I[A]],
-                                                               mapFieldNames : c.Expr[(String, String) => Option[String]])
+                                                              (i        : c.Expr[I[A]],
+                                                               mappings : c.Expr[FieldMappings])
                                                               (implicit ITag: c.WeakTypeTag[I[A]],
                                                                         ATag: c.WeakTypeTag[A]): c.Expr[Elem] =
-        convertSeq(c)(i, Some(mapFieldNames), None)
+        convertSeq(c)(i, Some(mappings), None)
     
     /* --- */
     
     def xml[A, I[_] <: IterableOnce[_]] (i             : I[A],
-                                                mapFieldNames : (String, String) => Option[String],
+                                                mappings : FieldMappings,
                                                 fieldName     : String) : Elem = macro convertSeqWithAllImpl[A, I]
     def convertSeqWithAllImpl[A, I[_] <: IterableOnce[_]] (c : blackbox.Context)
-                                                          (i             : c.Expr[I[A]],
-                                                           mapFieldNames : c.Expr[(String, String) => Option[String]],
-                                                           fieldName     : c.Expr[String])
+                                                          (i         : c.Expr[I[A]],
+                                                           mappings  : c.Expr[FieldMappings],
+                                                           fieldName : c.Expr[String])
                                                           (implicit ITag: c.WeakTypeTag[I[A]],
                                                                     ATag: c.WeakTypeTag[A]): c.Expr[Elem] =
-        convertSeq(c)(i, Some(mapFieldNames), Some(fieldName))
+        convertSeq(c)(i, Some(mappings), Some(fieldName))
     
     /* --- */
     
     def convertSeq[A, I[_] <: IterableOnce[_]] (c : blackbox.Context)
-                                               (i             : c.Expr[I[A]],
-                                                mapFieldNames : Option[c.Expr[(String, String) => Option[String]]],
-                                                fieldName     : Option[c.Expr[String]])
+                                               (i         : c.Expr[I[A]],
+                                                mappings  : Option[c.Expr[FieldMappings]],
+                                                fieldName : Option[c.Expr[String]])
                                                (implicit ITag : c.WeakTypeTag[I[A]],
                                                          ATag : c.WeakTypeTag[A]): c.Expr[Elem] = { import c.universe._
 //        println("iterable: " + ATag.tpe.typeSymbol.fullName)
         val lType = ITag.tpe
         val fullTypeName = lType.typeSymbol.fullName
-        if ( ATag.tpe <:< ITag.tpe ) { /* prohibit StackOverflow at compile time */
-            val typeAsExpr = c.Expr[String](q"$fullTypeName")
-            val mappedName = mapNameAsExpr(c)(mapFieldNames, fieldName, typeAsExpr)
-            createRuntimeConversion(c)(i, mappedName)
-        } else {
+        if ( ATag.tpe <:< ITag.tpe )  /* prohibit StackOverflow at compile time */
+            createRuntimeConversion(c)(i, mappings, fieldName)
+            
+        else {
             val typeAsExpr = c.Expr[String](q"""$fullTypeName + "[" + ${ATag.tpe.typeSymbol.fullName} + "]" """)
             c.Expr[Elem](q"""
-                scala.xml.Elem(${mapNameAsExpr(c)(mapFieldNames, fieldName, typeAsExpr)},
+                scala.xml.Elem(${fieldName.getOrElse(c.Expr[String](q"null"))},
                                $typeAsExpr,
                                scala.xml.Null,
                                scala.xml.TopScope,
@@ -100,7 +100,6 @@ object CTConverter {
     def convertArray[A](c: blackbox.Context)
                        (l: c.Expr[Array[A]], fieldName: Option[c.Expr[String]])
                        (implicit ATag: c.WeakTypeTag[Array[A]]): c.Expr[Elem] = { import c.universe._
-//        println("array: " + ATag.tpe.typeSymbol.fullName)
         c.Expr[Elem](q"""
             scala.xml.Elem(${fieldName.getOrElse(c.Expr[String](q"null"))},
                            ${ATag.tpe.typeSymbol.fullName},
@@ -113,12 +112,10 @@ object CTConverter {
     
     /* =========================================== Arbitrary Conversion ============================================ */
     
-    def xml[A] (a: A): Elem = macro convertImpl[A]
-    def xml[A] (a: A, mapFieldNames: (String, String) => Option[String]): Elem = macro convertWithMappingImpl[A]
-    def xml[A] (a: A, fieldName: String): Elem = macro convertWithFieldImpl[A]
-    def xml[A] (a             : A,
-                       mapFieldNames : (String, String) => Option[String],
-                       fieldName     : String) : Elem = macro convertWithAllImpl[A]
+    def xml[A] (a : A): Elem = macro convertImpl[A]
+    def xml[A] (a : A, mappings : FieldMappings): Elem = macro convertWithMappingImpl[A]
+    def xml[A] (a : A, fieldName : String): Elem = macro convertWithFieldImpl[A]
+    def xml[A] (a : A, mappings : FieldMappings, fieldName : String) : Elem = macro convertWithAllImpl[A]
     
     def convertImpl[A] (c: blackbox.Context)
                        (a: c.Expr[A])
@@ -126,9 +123,9 @@ object CTConverter {
         convertClassToXML(c)(a, None, None)
     
     def convertWithMappingImpl[A] (c : blackbox.Context)
-                                  (a : c.Expr[A], mapFieldNames: c.Expr[(String, String) => Option[String]])
+                                  (a : c.Expr[A], mappings: c.Expr[FieldMappings])
                                   (implicit ATag: c.WeakTypeTag[A]): c.Expr[Elem] =
-        convertClassToXML(c)(a, Some(mapFieldNames), None)
+        convertClassToXML(c)(a, Some(mappings), None)
     
     def convertWithFieldImpl[A] (c : blackbox.Context)
                                 (a : c.Expr[A], fieldName: c.Expr[String])
@@ -136,31 +133,35 @@ object CTConverter {
         convertClassToXML(c)(a, None, Some(fieldName))
     
     def convertWithAllImpl[A] (c : blackbox.Context)
-                              (a             : c.Expr[A],
-                               mapFieldNames : c.Expr[(String, String) => Option[String]],
-                               fieldName     : c.Expr[String])
+                              (a         : c.Expr[A],
+                               mappings  : c.Expr[FieldMappings],
+                               fieldName : c.Expr[String])
                               (implicit ATag : c.WeakTypeTag[A]) : c.Expr[Elem] =
-        convertClassToXML(c)(a, Some(mapFieldNames), Some(fieldName))
+        convertClassToXML(c)(a, Some(mappings), Some(fieldName))
     
     
     def convertClassToXML[A] (c : blackbox.Context)
-                             (a             : c.Expr[A],
-                              mapFieldNames : Option[c.Expr[(String, String) => Option[String]]],
-                              fieldName     : Option[c.Expr[String]])
+                             (a         : c.Expr[A],
+                              mappings  : Option[c.Expr[FieldMappings]],
+                              fieldName : Option[c.Expr[String]])
                              (implicit ATag : c.WeakTypeTag[A]) : c.Expr[Elem] = { import c.universe._
               
         val aType = ATag.tpe
         val fullTypeName = aType.typeSymbol.fullName
         val typeAsExpr = c.Expr[String](q"$fullTypeName")
-        val mappedName = mapNameAsExpr(c)(mapFieldNames, fieldName, typeAsExpr)
         
         if (isSimple(c)(aType))
             c.Expr[Elem](q"""
-                scala.xml.Elem($mappedName, $typeAsExpr, scala.xml.Null, scala.xml.TopScope, true, Seq(): _*) %
-                    scala.xml.Attribute("value", scala.xml.Text($a.toString()), scala.xml.Null)
+                scala.xml.Elem(${fieldName.getOrElse(c.Expr[String](q"null"))},
+                               $typeAsExpr,
+                               scala.xml.Null,
+                               scala.xml.TopScope,
+                               true,
+                               Seq(): _*) %
+                scala.xml.Attribute("value", scala.xml.Text($a.toString()), scala.xml.Null)
             """)
 
-            //todo array
+            //todo array inside this method, instead of overloading
 //        else if (aType <:< typeOf[Array[_]]) {
 //            val (symbol, tparam) = aType match {
 //                case TypeRef(_, symbol, tparam::Nil) => (symbol.fullName, tparam.typeSymbol.fullName)
@@ -177,7 +178,7 @@ object CTConverter {
 //        }
         
         else if (aType.typeSymbol.isAbstract)
-            createRuntimeConversion(c)(a, mappedName)
+            createRuntimeConversion(c)(a, mappings, fieldName)
         
         else {
             c.Expr[Elem](
@@ -186,7 +187,7 @@ object CTConverter {
                      .get
                      .paramLists
                      .head
-                     .foldLeft(q"""scala.xml.Elem($mappedName,
+                     .foldLeft(q"""scala.xml.Elem(${fieldName.getOrElse(c.Expr[String](q"null"))},
                                                   $typeAsExpr,
                                                   scala.xml.Null,
                                                   scala.xml.TopScope,
@@ -226,23 +227,16 @@ object CTConverter {
         }
     }
     
-    //    def createRuntimeConversion[A] (c : blackbox.Context)
-//                                   (a : c.Expr[A],
-//                                    mapFieldNames: Option[c.Expr[(String, String) => Option[String]]],
-//                                    fieldName : Option[c.Expr[String]])
-//                                   (implicit ATag: c.WeakTypeTag[A]): c.Expr[Elem] = { import c.universe._
-//        val mapping = mapFieldNames.getOrElse( c.Expr[(String, String) => Option[String]](
-//            q"(_: String, _: String) => None")
-//        )
-//        c.Expr[Elem](q"""
-//            indv.jstengel.ezxml.extension.ct.RTConverter.convertToXML($a, $mapping,
-//            ${fieldName.getOrElse(c.Expr[String](q"null"))})
-//        """)
-//    }
     def createRuntimeConversion[A] (c : blackbox.Context)
-                                   (a : c.Expr[A],
-                                    fieldName : c.Expr[String])
+                                   (a         : c.Expr[A],
+                                    mappings  : Option[c.Expr[FieldMappings]],
+                                    fieldName : Option[c.Expr[String]])
                                    (implicit ATag: c.WeakTypeTag[A]): c.Expr[Elem] = { import c.universe._
-        c.Expr[Elem](q"""indv.jstengel.ezxml.extension.rt.RTConverter.convertToXML($a, pre = $fieldName)""")
+        c.Expr[Elem](q"""indv.jstengel.ezxml.extension.rt.RTConverter.convertToXML(
+            $a,
+            ${mappings.getOrElse(c.Expr[FieldMappings](q"indv.jstengel.ezxml.extension.mapping.FieldMappings()"))},
+            ${fieldName.getOrElse(c.Expr[String](q"null"))}
+        )""")
     }
+    
 }

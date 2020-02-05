@@ -1,6 +1,7 @@
 package indv.jstengel.ezxml.extension
 
 
+import indv.jstengel.ezxml.extension.mapping.FieldMappings
 import indv.jstengel.ezxml.extension.rt.RTConverter.convertToXML
 import indv.jstengel.ezxml.extension.rt.RTLoader
 
@@ -22,6 +23,6 @@ object RTWrappers {
     implicit class ObjWrapper[T](t: T)(implicit tt : TypeTag[T], ct : ClassTag[T]) {
         def xml: Elem = convertToXML(t)
         def xml(prefix: String): Elem = convertToXML(t, pre = prefix)
-        def xml(mapFieldName: (String, String) => Option[String]): Elem = convertToXML(t, mapFieldName)
+        def xml(mappings : FieldMappings): Elem = convertToXML(t, mappings)
     }
 }

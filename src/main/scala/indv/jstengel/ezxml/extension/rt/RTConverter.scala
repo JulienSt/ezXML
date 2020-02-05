@@ -2,20 +2,21 @@ package indv.jstengel.ezxml.extension.rt
 
 
 import scala.language.reflectiveCalls
-import scala.reflect.{ClassTag, api}
+import scala.reflect.ClassTag
 import scala.xml.{Attribute, Elem, Null, Text, TopScope}
 import indv.jstengel.ezxml.core.SimpleWrapper.ElemWrapper
 import RuntimeReflectHelper.{arrayType,
     asArrayType,
     classTagOf,
-    isSimpleType,
     createStringRepresentation,
     getType,
-    getTypeParams,
-    iterableType,
     getTypeFromString,
+    getTypeParams,
+    isSimpleType,
+    iterableType,
     tagOf
 }
+import indv.jstengel.ezxml.extension.mapping.FieldMappings
 
 
 // https://medium.com/@sinisalouc/overcoming-type-erasure-in-scala-8f2422070d20
@@ -28,12 +29,9 @@ object RTConverter {
     
     type XmlCapable = { def saveAsXml: Elem }
     
-    // fieldNameMap
-    // classNameMap
-    // accessNameMap
-    def convertToXML[A] (a : A,
-                         mapFieldNames: (String, String) => Option[String] = (_, _) => None,
-                         pre : String = null)
+    def convertToXML[A] (a        : A,
+                         mappings : FieldMappings = FieldMappings(),
+                         pre      : String = null)
                         (implicit tt : TypeTag[A], ct : ClassTag[A]) : Elem = {
         try {
             /* sadly */
@@ -54,7 +52,7 @@ object RTConverter {
                 val tParam = tParams.head
                 val tagParam = tagOf(tParam)
                 val arr = asArrayType(a)(tagParam, classTagOf(tParam)).map { e =>
-                    convertToXML(e, mapFieldNames)(tagParam, classTagOf(tParam))
+                    convertToXML(e, mappings)(tagParam, classTagOf(tParam))
                 }.toIndexedSeq
                 Elem(pre, createStringRepresentation(ttType)(tParams), Null, TopScope, true, arr: _*)
             }
@@ -63,14 +61,14 @@ object RTConverter {
                 val iterator = a.asInstanceOf[IterableOnce[Any]].iterator
                 val arrayToElemSeq: (Any => Elem) => Seq[Elem] = aToXml => iterator.map(aToXml).toSeq
                 val seq = typeParams match {
-                    case Nil              => arrayToElemSeq(e => convertToXML(e, mapFieldNames))
+                    case Nil              => arrayToElemSeq(e => convertToXML(e, mappings))
                     case typeParam :: Nil =>
-                        arrayToElemSeq(e => convertToXML(e, mapFieldNames)(tagOf(typeParam), ClassTag(e.getClass)))
+                        arrayToElemSeq(e => convertToXML(e, mappings)(tagOf(typeParam), ClassTag(e.getClass)))
                     case paramList =>
                         val n = paramList.length
                         val parameterizedTupleName = s"scala.Tuple$n" + className.dropWhile(_ != '[')
                         val tupleType = getTypeFromString(parameterizedTupleName)
-                        arrayToElemSeq(e => convertToXML(e, mapFieldNames)(tagOf(tupleType), ClassTag(e.getClass)))
+                        arrayToElemSeq(e => convertToXML(e, mappings)(tagOf(tupleType), ClassTag(e.getClass)))
                 }
                 Elem(pre, className, Null, TopScope, true, seq: _*)
             }
@@ -88,10 +86,7 @@ object RTConverter {
                                      val memberName  = p.name
                                      val memberNameStr = memberName.toString
                                      val member = reflectedType.member(
-                                         mapFieldNames(className, memberNameStr) match {
-                                             case Some(alternative) => TermName(alternative)
-                                             case None => memberName
-                                         }
+                                         TermName(mappings.getSubstituteName(memberNameStr)(tagOf(reflectedType)))
                                      )
                                      
                                      val fieldValue  =
@@ -122,47 +117,12 @@ object RTConverter {
                                                               case _ : ScalaReflectionException => member.typeSignature
                                                           }
                                          Elem(pre, l, att, s, false, c ++
-                                             convertToXML(fieldValue, mapFieldNames, memberNameStr)
+                                             convertToXML(fieldValue, mappings, memberNameStr)
                                                          (tagOf(fieldType), ClassTag(fieldValue.getClass)) : _*)
                                      }
                              }
             }
         }
     }
-    
-//    val fieldValue  = try
-//        reflectedObj.reflectField(member.asTerm).get
-//    catch {
-//        case _: ScalaReflectionException =>
-//            reflectedObj.reflectMethod(member.asMethod).apply()
-//    }
-//
-//    val memberType = try           /* otherwise you get [=> A] for [A] */
-//        member.asMethod.returnType
-//    catch {
-//        case _ : ScalaReflectionException => member.typeSignature
-//    }
-//    val memberClassName = fieldValue.getClass.getSimpleName
-//
-//    if(fieldValue == null)
-//        elem % Attribute(memberNameStr, memberClassName, Text("_NULL_"), Null)
-//    else if (isSimple(fieldValue))
-//             elem % Attribute(memberNameStr, memberClassName, Text(fieldValue.toString), Null)
-//    else {
-//        Elem(pre,
-//             l,
-//             att,
-//             s,
-//             false,
-//             c ++ convertToXML(fieldValue,
-//                               mapFieldNames,
-//                               memberNameStr)(tagOf(memberType),
-//                                              ClassTag(fieldValue.getClass)) : _*)
-
-//    def isSimple(a: Any): Boolean = {
-//        val c = a.getClass
-//        val cName = Option(c.getCanonicalName).getOrElse(c.getName)
-//        cName.contains("java.lang") && !cName.contains("[]")
-//    }
     
 }

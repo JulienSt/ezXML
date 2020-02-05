@@ -3,7 +3,7 @@ package indv.jstengel.ezxml.extension.ct
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 import scala.xml.Elem
-import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{isSimple, mapNameAsExpr}
+import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.isSimple
 
 
 object CTLoader {
