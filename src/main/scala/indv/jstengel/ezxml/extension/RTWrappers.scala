@@ -1,7 +1,7 @@
 package indv.jstengel.ezxml.extension
 
 
-import indv.jstengel.ezxml.extension.mapping.FieldMappings
+import indv.jstengel.ezxml.extension.mapping.FieldMapping
 import indv.jstengel.ezxml.extension.rt.RTConverter.convertToXML
 import indv.jstengel.ezxml.extension.rt.RTLoader
 
@@ -11,6 +11,11 @@ import scala.util.Try
 import scala.xml.Elem
 
 object RTWrappers {
+    
+    /**
+     *
+     * @param elem
+     */
     implicit class ElemWrapper (elem : Elem) {
         import scala.reflect.runtime.universe.TypeTag
         /**
@@ -20,9 +25,28 @@ object RTWrappers {
          */
         def obj[T](implicit tt : TypeTag[T], ct: ClassTag[T]): Try[T] = Try(RTLoader.load[T](elem))
     }
+    
+    /**
+     *
+     * @param t
+     * @param tt
+     * @param ct
+     * @tparam T
+     */
     implicit class ObjWrapper[T](t: T)(implicit tt : TypeTag[T], ct : ClassTag[T]) {
+    
+        /**
+         *
+         * @return
+         */
         def xml: Elem = convertToXML(t)
-        def xml(prefix: String): Elem = convertToXML(t, pre = prefix)
-        def xml(mappings : FieldMappings): Elem = convertToXML(t, mappings)
+    
+        /**
+         *
+         * @param mappings
+         * @return
+         */
+        def xml(mappings : FieldMapping[_]*): Elem = convertToXML(t, mappings)
+        
     }
 }

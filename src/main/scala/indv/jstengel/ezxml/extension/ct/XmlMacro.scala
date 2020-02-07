@@ -52,7 +52,7 @@ object XMLMacro {
                             val newTerm      = TermName(s"__${ fieldName.toString }Cache")
                             val xmlExpansion =
                                 q"""indv.jstengel.ezxml.extension.ct.CTConverter.xml($fieldName,
-                                                                                         ${fieldName.toString})"""
+                                                                                     ${fieldName.toString})"""
                 
                             val newDefinitions =
                                 if ( isTypeDefined(tpt) )
@@ -75,19 +75,19 @@ object XMLMacro {
                     case q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$body }" :: _ =>
                         q"""$mods object $tname extends { ..$earlydefns } with ..$parents { $self =>
                                 def loadFromXML(elem: scala.xml.Elem) : $tpname[..$tparams] =
-                                    indv.jstengel.ezxml.extension.ct.CTLoader.obj[$tpname[..$tparams]](elem)
+                                    indv.jstengel.ezxml.extension.ct.CTLoader.annotationObj[$tpname[..$tparams]](elem)
                             ..$body
                             }"""
                     case _ =>
                         q"""object ${TermName(tpname.toString)} {
                                 def loadFromXML(elem: scala.xml.Elem) : $tpname[..$tparams] =
-                                    indv.jstengel.ezxml.extension.ct.CTLoader.obj[$tpname[..$tparams]](elem)
+                                    indv.jstengel.ezxml.extension.ct.CTLoader.annotationObj[$tpname[..$tparams]](elem)
                             }"""
                 }
                 
                 q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents {
                         $self =>
-                        def saveAsXml : scala.xml.Elem = indv.jstengel.ezxml.extension.ct.CTConverter.xml(this)
+                        def saveAsXml: scala.xml.Elem = indv.jstengel.ezxml.extension.ct.CTConverter.xmlAnnotation(this)
                         ..${newStats.flatMap(_._1)}
                     }
                     ..$newTail"""

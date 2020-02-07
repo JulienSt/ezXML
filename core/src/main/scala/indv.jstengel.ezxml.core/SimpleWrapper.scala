@@ -81,29 +81,28 @@ object SimpleWrapper {
         def \\~ (childNodeName: String, predicate: Elem => Boolean): OptionalPath =
             XmlPath \\~ (elem, childNodeName, predicate)
         
-        def apply (createPath : ElemWrapper => OptionalPath): OptionalPath = createPath(this)
-        
-        
         def hasCorrectLabel(label: String): Boolean = elem.label == label || label == "_"
-        
         
         private def convertTriplesToAttributes (triples : (String, String, String)*) = {
             triples.tail.foldLeft({
-                                      val (pre, key, value) = triples.head
-                                      Attribute(pre, key, Text(value), Null)
-                                  }){ case (previous, (pre, key, value)) => Attribute(pre, key, Text(value), previous) }
+                val (pre, key, value) = triples.head
+                Attribute(pre, key, Text(value), Null)
+            }){ case (previous, (pre, key, value)) => Attribute(pre, key, Text(value), previous) }
         }
         
         private def convertPairsToAttributes (pairs : (String, String)*) = {
             pairs.tail.foldLeft({
-                                    val (key, value) = pairs.head
-                                    Attribute(key, Text(value), Null)
-                                }){ case (previous, (key, value)) => Attribute(key, Text(value), previous) }
+                val (key, value) = pairs.head
+                Attribute(key, Text(value), Null)
+            }){ case (previous, (key, value)) => Attribute(key, Text(value), previous) }
         }
         
     }
     
     implicit class NodeWrapper (node: Node) {
+        
+        // todo insert method to transform node names (with or without uri) and key names
+        
         def toPrettyXMLString : String = pp.format(node)
     }
     

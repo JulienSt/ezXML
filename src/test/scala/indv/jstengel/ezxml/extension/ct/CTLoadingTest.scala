@@ -55,4 +55,15 @@ object CTLoadingTest extends App {
     println(stringOf(obj[Array[Int]](l.xml)))
     println(stringOf(obj[Array[Int]](xml(l))))
     
+    
+//    (elem: scala.xml.Elem) => new indv.jstengel.ezxml.extension.AnnotatedExampleClasses.StrangeIterator(
+//        elem.attributes
+//            .collectFirst{ case scala.xml.PrefixedAttribute(_, id, scala.xml.Text(value), _) => value}
+//            .get, CTLoader.obj[List[(Int, Int)]](elem
+//                                                   .child
+//                                                   .collectFirst{case c: scala.xml.Elem if c.prefix=="it" => c}
+//                                                   .get))
+    
+    println(CTConverter.xml((1, 2))) // <- for some reason this is without typeParameters
+    
 }

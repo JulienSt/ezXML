@@ -102,14 +102,12 @@ class RTLoadingTest extends FlatSpec with BasicRtLoadTest {
     
     test(ccCurriedVarArgs(1,2,3,4,5)("a", "b", "c", "d"))
     
-     // todo next
-//    val treeXml = tree.xml
-//    val treeXmlXml = treeXml.xmlWithMapping(getCorrectName)
-//    s"\n${treeXml.toPrettyXMLString}" should s" load with $treeXmlXml " in {
-//        assert(treeXml == treeXmlXml.obj[scala.xml.Elem].get)
-//    }
-
-
+    val emptyList: List[Int] = List()
+    test(emptyList)
+    
+    test(new IntList(1, 2, 3, 4, 5, 6))
+    test(ccIntList(1, 2, 3, 4, 5, 6))
+    
     // todo test failures for correct behavior
 //    println(List(2, 3, 4).xml.obj[List[String]])
 //    val i2 = 2

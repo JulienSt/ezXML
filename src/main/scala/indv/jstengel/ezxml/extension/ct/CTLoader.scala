@@ -8,9 +8,24 @@ import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.isSimple
 
 object CTLoader {
     
+    def obj[A]: Elem => A = macro objImpl[A]
+    def objImpl[A](c : blackbox.Context)(implicit ATag: c.WeakTypeTag[A]): c.Expr[Elem => A] =
+        loadObjFromXml(c)(isCalledFromAnnotation = false)
     
-    def obj[A]: Elem => A = macro loadObjFromXml[A]
+    def annotationObj[A]: Elem => A = macro annotationObjImpl[A]
+    def annotationObjImpl[A](c : blackbox.Context)(implicit ATag: c.WeakTypeTag[A]): c.Expr[Elem => A] =
+        loadObjFromXml(c)(isCalledFromAnnotation = true)
+        
+    /**
+     * the implementation of macro obj
+     * this function creates a loading function to extract
+     * @param c
+     * @param ATag
+     * @tparam A
+     * @return
+     */
     def loadObjFromXml[A](c : blackbox.Context)
+                         (isCalledFromAnnotation : Boolean)
                          (implicit ATag: c.WeakTypeTag[A]): c.Expr[Elem => A] = { import c.universe._
         
         val aType = ATag.tpe
@@ -21,7 +36,8 @@ object CTLoader {
             else
                 c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => (elem \@ "value")${ tagToName(c)(ATag) }""")
 
-        else if (aType <:< typeOf[IterableOnce[_]] || aType <:< typeOf[Array[_]]) {
+        else if ((aType <:< typeOf[IterableOnce[_]] || aType <:< typeOf[Array[_]]) &&
+                 !isCalledFromAnnotation) {
             val (symbol, tparam) = aType match {
                 case TypeRef(_, symbol, tparam::Nil) => (symbol.fullName, tparam.typeSymbol.fullName)
             }
@@ -55,8 +71,9 @@ object CTLoader {
                             val lastIndex = paramList.length - 1
                             paramList.zipWithIndex
                                      .foldLeft("("){ case (quote : String, (field : Symbol, index : Int)) =>
-                                         val fName     = field.name.decodedName.toString
-                                         val fieldType = field.typeSignature
+                                         val fName      = field.name.decodedName.toString
+                                         val fieldType  = field.typeSignature
+                                         val isRepeated = fieldType.toString.endsWith("*")
                                          val fieldAsQuote =
                                              if ( isSimple(c)(fieldType) )
                                                  s"""(elem.attributes
@@ -79,10 +96,15 @@ object CTLoader {
                                                  |    .extension
                                                  |    .ct
                                                  |    .CTLoader
-                                                 |    .obj[$fieldType](elem
+                                                 |    .obj[${
+                                                     if(isRepeated)
+                                                         s"Seq[${fieldType.toString.dropRight(1)}]"
+                                                     else
+                                                         fieldType
+                                                 }](elem
                                                  |    .child
                                                  |    .collectFirst{case c: scala.xml.Elem if c.prefix=="$fName" => c}
-                                                 |    .get)""".stripMargin
+                                                 |    .get)${if(isRepeated) ":_*" else ""}""".stripMargin
                                          if ( index < lastIndex )
                                              s"$quote$fieldAsQuote, "
                                          else
@@ -92,12 +114,18 @@ object CTLoader {
                         .foldLeft(s"(elem: scala.xml.Elem) => new ${aType.typeSymbol.fullName}"){
                             case (quote : String, listAsQuote : String) => s"$quote$listAsQuote"
                         }
+                println(treeAsString)
                 c.Expr[Elem => A](c.parse(treeAsString))
             }
         }
     }
     
-    
+    /**
+     *
+     * @param c
+     * @tparam A
+     * @return
+     */
     def tagToName[A] (c : blackbox.Context) : PartialFunction[c.WeakTypeTag[A], c.TermName] = {
         import c.{WeakTypeTag, typeOf}
         import c.universe.TermName

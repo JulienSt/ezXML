@@ -1,7 +1,22 @@
 package indv.jstengel.ezxml.extension.rt
 
 
-import RuntimeReflectHelper._
+import RuntimeReflectHelper.{
+    getTypeFromString,
+    NullFlag,
+    companionMethodExtraction,
+    isSimpleType,
+    stringToSimpleValue,
+    iterableType,
+    productType,
+    arrayType,
+    getTypeParams,
+    tagOf,
+    minimumBaseClasses,
+    asArrayType,
+    classTagOf,
+    isConstructorMissing
+}
 
 import scala.reflect.ClassTag
 import scala.xml.{Elem, PrefixedAttribute, Text}
@@ -42,11 +57,12 @@ object RTLoader {
     
         else if ( isObject(loadedType, loadedSymbol) )
             rm.reflectModule(companion.asModule).instance
-    
+            
         else if ( isSimpleType(loadedType) )
             stringToSimpleValue(elem \@ "value")(tagOf(loadedType))
 
-        else if ( loadedType <:< iterableType )
+        else if (loadedType <:< iterableType &&
+                 (isConstructorMissing(loadedType) || loadedType.typeSymbol.isAbstract))
             loadIterable(elem, loadedType)
     
         else if ( loadedType <:< productType )
@@ -59,6 +75,7 @@ object RTLoader {
         }
         else
             loadClass(elem, loadedType)
+        
         }.asInstanceOf[A]
     
     /**
@@ -92,7 +109,8 @@ object RTLoader {
         val loadedElems = loadChildren(elem, getTypeFromString(elem.label))
         val companionSymbol  = tpe.typeSymbol.asClass.companion
         val companionMembers = companionSymbol.typeSignature.members
-        companionMembers.collectFirst(companionMethodExtraction(companionSymbol, "from"))
+        companionMembers.collectFirst(companionMethodExtraction(companionSymbol, "from") orElse
+                                      companionMethodExtraction(companionSymbol, "fromSeq"))
                         .map(_(loadedElems))
                         .getOrElse{
                             val f = companionMembers.collectFirst(companionMethodExtraction(companionSymbol, "apply"))
@@ -102,10 +120,12 @@ object RTLoader {
     }
     
     /**
-     *
-     * @param elem
-     * @param tpe
-     * @return
+     * loads classes that inherit from the class Product (such as case classes, or tuples).
+     * These classes are not loaded though loadClass,
+     * since all these classes have an apply method that works like their constructor
+     * @param elem the product represented as a xml-elem
+     * @param tpe the type that is contained inside the elem
+     * @return a product of type tpe contained inside an object of type Any
      */
     @inline private def loadProduct (elem : Elem, tpe : Type) : Any = {
         val companionSymbol  =
@@ -123,13 +143,13 @@ object RTLoader {
     }
     
     /**
-     *
-     * @param elem
-     * @param tpe
-     * @return
+     * loads a arbitrary class through reflection of the constructor of the desired class
+     * @param elem an object that contains an object
+     * @param tpe the type that is contained inside the elem
+     * @return an object as type tpe returned as type Any
      */
     @inline private def loadClass (elem : Elem, tpe : Type): Any = {
-        val (constructor, returnType) = loadConstructor(elem.label)
+        val (constructor, returnType) = loadConstructor(tpe)
         if ( tpe <:< returnType || returnType.baseClasses == tpe.baseClasses &&
                                    getTypeParams(returnType).forall(_.baseClasses == minimumBaseClasses) ) {
             val loadedParams = extractParamsForFunctionFromElem(constructor, elem)
@@ -140,12 +160,12 @@ object RTLoader {
     }
     
     /**
-     *
-     * @param className
-     * @return
+     * loads the primary constructor to the given type through reflections.
+     * @param tpe the type for which the constructor will be loaded
+     * @return the primary constructor to the given type
      */
-    @inline private def loadConstructor (className : String) : (MethodMirror, Type) = {
-        val classSymbol = getTypeFromString(className).typeSymbol.asClass
+    @inline private def loadConstructor (tpe : Type) : (MethodMirror, Type) = {
+        val classSymbol = tpe.typeSymbol.asClass
         classSymbol.typeSignature
                    .members
                    .collectFirst{ case m : MethodSymbol if m.isPrimaryConstructor => m }
@@ -154,10 +174,11 @@ object RTLoader {
     }
     
     /**
-     *
-     * @param f
-     * @param elem
-     * @return
+     * loads all values to a given function f from a given xml-elem
+     * @param f the function for which the parameter values will be loaded
+     * @param elem contains all values associated to the parameters of f
+     * @return a List[ List[Any] ], where the first List holds the parameter groups (think of currying) and the inner
+     *         Lists hol all the loaded values corresponding to the parameters from f
      */
     private def extractParamsForFunctionFromElem (f : ru.MethodMirror, elem : Elem): List[List[Any]] = {
         f.symbol
@@ -167,6 +188,8 @@ object RTLoader {
                  val paramName = param.name.toString
                  elem.attributes
                      .collectFirst{
+                         case PrefixedAttribute(_, key, Text(NullFlag), _) if key.startsWith(paramName) =>
+                             null
                          case PrefixedAttribute(pre, key, Text(value), _) if key.startsWith(paramName) =>
                              stringToSimpleValue(value)(tagOf(getTypeFromString(pre)))
                      }

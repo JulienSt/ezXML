@@ -6,20 +6,10 @@ import indv.jstengel.ezxml.extension.ct.Xml
 
 object AnnotatedExampleClasses {
     
-    //todo
-    class StrangeIterator(id: String, iterator: List[(Int, Int)]) extends Iterator[(Int, Int)] {
-        override def hasNext : Boolean = iterator.iterator.hasNext
-        override def next () : (Int, Int) = iterator.iterator.next()
-    }
-    
     // todo
-    case class ccIntList(i: Int*) extends Iterable[Int] {
-        override def iterator : Iterator[Int] = i.iterator
-    }
-    
-    // todo
-    class IntList(val i: Int*) extends Iterable[Int] {
-        override def iterator : Iterator[Int] = i.iterator
+//    @Xml
+    class StrangeIterator(id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
+        override val iterator : Iterator[(Int, Int)] = it.iterator
     }
     
     trait IntSet {
@@ -53,8 +43,11 @@ object AnnotatedExampleClasses {
         override def toString : String = "{" + left + elem + right + "}"
     }
     
-    //    @Xml class AnnotatedIntList(val i: Int*) extends Iterable[Int] {
-    //        override def iterator : Iterator[Int] = i.iterator
-    //    }
+    @Xml class AnnotatedIntList(val i: Int*) extends Iterable[Int] {
+        override def iterator : Iterator[Int] = i.iterator
+        override def equals (obj : Any) : Boolean = obj match {
+            case other: AnnotatedIntList => iterator.toList == other.iterator.toList
+        }
+    }
     
 }

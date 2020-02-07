@@ -10,3 +10,5 @@ gradlew.bat
 gradlew
 
 build/
+
+out/

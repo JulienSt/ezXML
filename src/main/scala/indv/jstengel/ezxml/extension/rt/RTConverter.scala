@@ -5,7 +5,9 @@ import scala.language.reflectiveCalls
 import scala.reflect.ClassTag
 import scala.xml.{Attribute, Elem, Null, Text, TopScope}
 import indv.jstengel.ezxml.core.SimpleWrapper.ElemWrapper
-import RuntimeReflectHelper.{arrayType,
+import RuntimeReflectHelper.{
+    NullFlag,
+    arrayType,
     asArrayType,
     classTagOf,
     createStringRepresentation,
@@ -14,9 +16,10 @@ import RuntimeReflectHelper.{arrayType,
     getTypeParams,
     isSimpleType,
     iterableType,
-    tagOf
+    tagOf,
+    isConstructorMissing
 }
-import indv.jstengel.ezxml.extension.mapping.FieldMappings
+import indv.jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
 
 
 // https://medium.com/@sinisalouc/overcoming-type-erasure-in-scala-8f2422070d20
@@ -29,9 +32,11 @@ object RTConverter {
     
     type XmlCapable = { def saveAsXml: Elem }
     
-    def convertToXML[A] (a        : A,
-                         mappings : FieldMappings = FieldMappings(),
-                         pre      : String = null)
+    private[extension]
+    def convertToXML[A] (a           : A,
+                         mappings    : FieldMappings = Seq(),
+                         pre         : String = null,
+                         isRecursive : Boolean = false)
                         (implicit tt : TypeTag[A], ct : ClassTag[A]) : Elem = {
         try {
             /* sadly */
@@ -57,11 +62,22 @@ object RTConverter {
                 Elem(pre, createStringRepresentation(ttType)(tParams), Null, TopScope, true, arr: _*)
             }
             
-            else if (ttType <:< iterableType) {
+            else if ((ttType <:< iterableType || className.startsWith("scala.collection.")) &&
+                     !isRecursive &&
+                     (isConstructorMissing(ttType) || ttType.typeSymbol.isAbstract)) {
                 val iterator = a.asInstanceOf[IterableOnce[Any]].iterator
                 val arrayToElemSeq: (Any => Elem) => Seq[Elem] = aToXml => iterator.map(aToXml).toSeq
                 val seq = typeParams match {
-                    case Nil              => arrayToElemSeq(e => convertToXML(e, mappings))
+                    case Nil              =>
+                        val asList = List.from(iterator)
+                        val listHead = asList.headOption
+                        val isIterableRecursive = listHead.contains(a)
+                        if (isIterableRecursive)
+                            asList.map(e => convertToXML(e, mappings, isRecursive = isIterableRecursive))
+                        else if (listHead.nonEmpty)
+                            asList.map(e => convertToXML(e, mappings))
+                        else
+                            Nil
                     case typeParam :: Nil =>
                         arrayToElemSeq(e => convertToXML(e, mappings)(tagOf(typeParam), ClassTag(e.getClass)))
                     case paramList =>
@@ -75,52 +91,81 @@ object RTConverter {
             
             else {
                 val reflectedObj  = rm.reflect(a)
-                val reflectedType = reflectedObj.symbol.toType
-                reflectedType.members
-                             .collectFirst{ case m : MethodSymbol if m.isPrimaryConstructor => m }
-                             .get
-                             .paramLists
-                             .flatten
-                             .foldLeft(Elem(pre, className, Null, TopScope, true, Seq() : _*)){
-                                 case (elem @ Elem(pre, l, att, s, c @ _*), p) =>
-                                     val memberName  = p.name
-                                     val memberNameStr = memberName.toString
-                                     val member = reflectedType.member(
-                                         TermName(mappings.getSubstituteName(memberNameStr)(tagOf(reflectedType)))
-                                     )
+                val reflectedType = reflectedObj.symbol.typeSignature
+                val constructor = reflectedType.members
+                                               .collectFirst{ case m : MethodSymbol if m.isPrimaryConstructor => m }
+                                               .get
+                constructor
+                    .paramLists
+                    .flatten
+                    .foldLeft(Elem(pre, className, Null, TopScope, true, Seq() : _*)){
+                        case (elem @ Elem(pre, l, att, s, c @ _*), p) =>
+                            val fieldName  = p.name
+                            val fieldNameStr = fieldName.toString
+                            
+                            val member = reflectedType.member(
+                                TermName(mappings.getSubstituteName(fieldNameStr)(tagOf(constructor.returnType)))
+                            )
                                      
-                                     val fieldValue  =
-                                         try
-                                             reflectedObj.reflectField(member.asTerm).get
-                                         catch {
-                                             case _: ScalaReflectionException =>
-                                                 reflectedObj.reflectMethod(member.asMethod).apply()
-                                         }
+                            val fieldValue  = try
+                                                  reflectedObj.reflectField(member.asTerm).get
+                                              catch {
+                                                  case _: ScalaReflectionException => try {
+                                                      reflectedObj.reflectMethod(member.asMethod).apply()
+                                                  } catch {
+                                                      case r: ScalaReflectionException =>
+                                                          val explanation = ScalaReflectionException(
+                                                              "A field couldn't be accessed through reflection."+
+                                                              "\nMake sure every Field you want to access " +
+                                                              "is actually publicly accessible.\n" +
+                                                              "If You don't want to change the privacy of a field,\n" +
+                                                              "look into indv.jstengel.ezxml.extension" +
+                                                              ".mapping.FieldMapping.FieldMappings")
+                                                          explanation.setStackTrace(Array.concat(
+                                                              explanation.getStackTrace,
+                                                              r.getStackTrace).drop(6)
+                                                          )
+                                                          throw explanation
+                                                  }
+                                              }
                                      
-                                     val memberType =
-                                         try
-                                             rm.reflect(fieldValue).symbol.toType
-                                         catch {
-                                             case _ : ScalaReflectionException => member.typeSignature.resultType
-                                         }
+                            val valueType = try
+                                                rm.reflect(fieldValue).symbol.toType
+                                            catch {
+                                                case _ : ScalaReflectionException => member.typeSignature.resultType
+                                                case _ : NullPointerException     => member.typeSignature.resultType
+                                            }
                                      
-                                     val memberTypeName = memberType.typeSymbol.fullName
+                            val valueTypeName = valueType.typeSymbol.fullName
+    
+                            val fieldType = try
+                                                member.asMethod.returnType /* otherwise you get [=> A] for [A] */
+                                            catch {
+                                                case _ : ScalaReflectionException => member.typeSignature
+                                            }
+    
+                            val newLabel = if (fieldType.typeSymbol.isAbstract && l.contains(fieldType.toString))
+                                               l.replace(fieldType.typeSymbol.fullName, valueTypeName)
+                                           else
+                                               l
                                      
-                                     if(fieldValue == null)
-                                         elem addAttWithPre (memberTypeName, memberNameStr, "_NULL_")
-                                     else if (isSimpleType(memberType))
-                                         elem addAttWithPre (memberTypeName, memberNameStr, fieldValue.toString)
-                                     else {
-                                         val fieldType = try           /* otherwise you get [=> A] for [A] */
-                                                              member.asMethod.returnType
-                                                          catch {
-                                                              case _ : ScalaReflectionException => member.typeSignature
-                                                          }
-                                         Elem(pre, l, att, s, false, c ++
-                                             convertToXML(fieldValue, mappings, memberNameStr)
-                                                         (tagOf(fieldType), ClassTag(fieldValue.getClass)) : _*)
-                                     }
-                             }
+                            if(fieldValue == null)
+                                elem addAttWithPre (valueTypeName, fieldNameStr, NullFlag)
+                            else if (isSimpleType(valueType)) {
+                                Elem(pre, newLabel, att, s, false, c:_*).addAttWithPre(valueTypeName,
+                                                                                       fieldNameStr,
+                                                                                       fieldValue.toString)
+                            } else {
+                                val savedType = if (!fieldType.typeSymbol.isAbstract)
+                                                    fieldType
+                                                else
+                                                    valueType
+                                Elem(pre, newLabel, att, s, false, c ++
+                                                                   convertToXML(fieldValue, mappings, fieldNameStr)
+                                                                               (tagOf(savedType),
+                                                                                ClassTag(fieldValue.getClass)) : _*)
+                            }
+                    }
             }
         }
     }

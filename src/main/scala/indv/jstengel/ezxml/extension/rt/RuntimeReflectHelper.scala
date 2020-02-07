@@ -24,6 +24,8 @@ import internal.typeRef
  */
 private[rt] object RuntimeReflectHelper {
     
+    private val AnyValType = typeOf[AnyVal]
+    private val NumberType = typeOf[Number]
     private val IntType = typeOf[Int]
     private val DoubleType = typeOf[Double]
     private val LongType = typeOf[Long]
@@ -77,13 +79,17 @@ private[rt] object RuntimeReflectHelper {
     private val seqSymbol = seqType.typeSymbol
     val minimumBaseClasses = List(typeOf[Any].typeSymbol)
     
+    val NullFlag : String = "_NULL_"
+    
     /**
      * a type is considered simple (in this library at least), when it is a sub type of AnyVal, Number, or String
      * and a value of that type can therefor easily be extracted from a String
      * @param tpe the type that will be checked
      * @return true, if the type is a sub type of AnyVal, Number, or String. false if that is not the case
+     *         (and java.lang.boolean, since that is not inheriting from number for some reason)
      */
-    def isSimpleType(tpe: Type): Boolean = tpe <:< typeOf[String] || tpe <:< typeOf[AnyVal] || tpe <:< typeOf[Number]
+    def isSimpleType(tpe: Type): Boolean =
+        tpe <:< AnyValType || tpe <:< StringType || tpe <:< NumberType || tpe <:< JBooleanType
     
     /**
      * this is a convenient method to reduce boilerplate and communicate intention
@@ -132,6 +138,16 @@ private[rt] object RuntimeReflectHelper {
     }
     
     /**
+     * Checks if a constructor of a given type exists or not
+     * @param tpe the type that will be checked
+     * @return true, if there is no constructor , false if it exists
+     */
+    def isConstructorMissing(tpe: Type): Boolean =
+        tpe.members
+           .collectFirst{ case m : MethodSymbol if m.isPrimaryConstructor => m }
+           .isEmpty
+    
+    /**
      * this method created a partial function that reflects a method inside a companion object.
      * the resulting partial function that is to be used in conjunction with collectFirst
      * @param companionSymbol the Symbol for the companion object from which the the method will be reflected
@@ -141,7 +157,7 @@ private[rt] object RuntimeReflectHelper {
      *         methodName
      */
     def companionMethodExtraction(companionSymbol: Symbol, methodName: String)
-                                              (implicit rm: Mirror): PartialFunction[Symbol, MethodMirror] = {
+                                 (implicit rm: Mirror): PartialFunction[Symbol, MethodMirror] = {
         case m : MethodSymbol if m.name.toString == methodName =>
             rm.reflect(rm.reflectModule(companionSymbol.asModule).instance).reflectMethod(m.asMethod)
     }
@@ -171,7 +187,20 @@ private[rt] object RuntimeReflectHelper {
     
         /* tpe <:< _ does not work for the colonColonType at this point, because sometimes it is missing it's tparam */
         def isColonColonType(tpe: Type): Boolean =
-            tpe.typeSymbol.asClass.baseClasses.head.asClass.fullName == "scala.collection.immutable.$colon$colon"
+            if (tpe.typeSymbol.isClass)
+                tpe.typeSymbol
+                   .asClass
+                   .baseClasses
+                   .headOption
+                   .map{head: Symbol =>
+                       if(head.isClass)
+                           head.asClass.fullName
+                       else
+                           ""
+                   }
+                   .contains("scala.collection.immutable.$colon$colon")
+        else
+            false
     
         /**
          * var args are annotated with "<repeated>" and need to be understood as iterable/seq
@@ -180,8 +209,8 @@ private[rt] object RuntimeReflectHelper {
          * @return true, if the given type is a vararg
          *         false otherwise
          */
-        def isRepeatedType(tpe: Type): Boolean = tpe.baseClasses.head.name.toString == "<repeated>"
-    
+        def isRepeatedType(tpe: Type): Boolean = tpe.baseClasses.headOption.map(_.name.toString).contains("<repeated>")
+        
         /**
          * to find the best fitting type param for an iterable it, all types of the elements inside it are reflected.
          * these types are then filtered, to get the best fitting base class that will represent the type param of it
@@ -189,14 +218,13 @@ private[rt] object RuntimeReflectHelper {
          * @param rm runtime mirror of the current universe. This is given implicitly to reduce boilerplate
          * @return the greatest common demeanor of all types inside it
          */
-        def findLowestSuperClassOfIterable(it: Iterator[Any])(implicit rm: Mirror): Type = {
+        def findLowestSuperClassOfIterable(it: Iterator[Any])(implicit rm: Mirror): Type =
             it.map(e => rm.reflect(e).symbol.asClass.baseClasses)
               .iterator
               .reduce((l1, l2) => l1.filter(x => l2.contains(x)))
               .head
               .asClass
               .toType
-        }
     
         /**
          * is used to turn :: into List
@@ -205,11 +233,15 @@ private[rt] object RuntimeReflectHelper {
          */
         def createListType(l: Any): Type = {
             val iterable = l.asInstanceOf[::[_]]
-            val ListParam = findLowestSuperClassOfIterable(iterable.iterator)
-            if (isColonColonType(ListParam))
-                typeRef(listType, listSymbol, List(createListType(iterable.asInstanceOf[::[::[_]]].flatten)))
-            else
-                typeRef(listType, listSymbol, List(ListParam))
+            val iterator = iterable.iterator
+            if ( iterator.nonEmpty ) {
+                val ListParam = findLowestSuperClassOfIterable(iterable.iterator)
+                if ( isColonColonType(ListParam) )
+                    typeRef(listType, listSymbol, List(createListType(iterable.asInstanceOf[::[::[_]]].flatten)))
+                else
+                    typeRef(listType, listSymbol, List(ListParam))
+            } else
+                typeRef(listType, listSymbol, List())
         }
     
         /**
@@ -219,11 +251,15 @@ private[rt] object RuntimeReflectHelper {
          */
         def createSeqType(l: Any): Type = {
             val iterable = l.asInstanceOf[IterableOnce[_]]
-            val ListParam = findLowestSuperClassOfIterable(iterable.iterator)
-            if (isColonColonType(ListParam))
-                typeRef(seqType, seqSymbol, List(createListType(iterable.asInstanceOf[Seq[::[_]]].flatten)))
-            else
-                typeRef(seqType, seqSymbol, List(ListParam))
+            val iterator = iterable.iterator
+            if (iterator.nonEmpty){
+                val ListParam = findLowestSuperClassOfIterable(iterator)
+                if (isColonColonType(ListParam))
+                    typeRef(seqType, seqSymbol, List(createListType(iterable.asInstanceOf[Seq[::[_]]].flatten)))
+                else
+                    typeRef(seqType, seqSymbol, List(ListParam))
+            } else
+                typeRef(seqType, seqSymbol, List())
         }
         
         val tpe = tt.tpe

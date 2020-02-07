@@ -103,4 +103,15 @@ object ExampleClasses {
     // transformed to a public member
     case class ccCurriedVarArgs[A, B](a: A*)(val b: B*) // has to be with a val or var to be accessible
     
+    case class ccIntList(i: Int*) extends Iterable[Int] {
+        override def iterator : Iterator[Int] = i.iterator
+    }
+    
+    class IntList(val i: Int*) extends Iterable[Int] {
+        override def iterator : Iterator[Int] = i.iterator
+        override def equals (obj : Any) : Boolean = obj match {
+            case other: IntList => iterator.toList == other.iterator.toList
+        }
+    }
+    
 }
