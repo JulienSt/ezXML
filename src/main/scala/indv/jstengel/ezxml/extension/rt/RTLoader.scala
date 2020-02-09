@@ -64,7 +64,7 @@ object RTLoader {
         else if (loadedType <:< iterableType &&
                  (isConstructorMissing(loadedType) || loadedType.typeSymbol.isAbstract))
             loadIterable(elem, loadedType)
-    
+            
         else if ( loadedType <:< productType )
             loadProduct(elem, loadedType)
     

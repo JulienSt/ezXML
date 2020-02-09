@@ -108,9 +108,14 @@ class RTLoadingTest extends FlatSpec with BasicRtLoadTest {
     test(new IntList(1, 2, 3, 4, 5, 6))
     test(ccIntList(1, 2, 3, 4, 5, 6))
     
-    // todo test failures for correct behavior
-//    println(List(2, 3, 4).xml.obj[List[String]])
-//    val i2 = 2
-//    println(i2.xml)
-//    println(i2.xml.obj)
+    val intTupleList: List[(Int, Int)] = List((1, 2), (2, 3), (3, 4))
+    test(intTupleList)
+    val tupleList: List[(Int, String)] = List((1, "s1"), (2, "s2"), (3, "s3"))
+    test(tupleList)
+    val emptyTupleList: List[(Int, String)] = List()
+    test(emptyTupleList)
+    
+    test(new AnnotatedIntList(1, 2, 3, 4, 5, 6))
+    test(new StrangeIterator("testID", List((1, 2), (3, 4), (5, 6))))
+    
 }

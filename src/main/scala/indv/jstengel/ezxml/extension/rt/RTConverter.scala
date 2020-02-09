@@ -10,15 +10,14 @@ import RuntimeReflectHelper.{
     arrayType,
     asArrayType,
     classTagOf,
-    createStringRepresentation,
     getType,
     getTypeFromString,
     getTypeParams,
+    isConstructorMissing,
     isSimpleType,
+    createStringRepresentation,
     iterableType,
-    tagOf,
-    isConstructorMissing
-}
+    tagOf}
 import indv.jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
 
 
@@ -67,7 +66,7 @@ object RTConverter {
                      (isConstructorMissing(ttType) || ttType.typeSymbol.isAbstract)) {
                 val iterator = a.asInstanceOf[IterableOnce[Any]].iterator
                 val arrayToElemSeq: (Any => Elem) => Seq[Elem] = aToXml => iterator.map(aToXml).toSeq
-                val seq = typeParams match {
+                val (newClassName: String, seq: Seq[Elem]) = typeParams match {
                     case Nil              =>
                         val asList = List.from(iterator)
                         val listHead = asList.headOption
@@ -75,18 +74,33 @@ object RTConverter {
                         if (isIterableRecursive)
                             asList.map(e => convertToXML(e, mappings, isRecursive = isIterableRecursive))
                         else if (listHead.nonEmpty)
-                            asList.map(e => convertToXML(e, mappings))
+                            (className, asList.map(e => convertToXML(e, mappings)))
                         else
-                            Nil
+                            (className, Nil)
+                    case typeParam :: Nil if typeParam.typeSymbol.fullName.startsWith("scala.Tuple") =>
+                        val asList = List.from(iterator)
+                        val tupleType =
+                            asList.headOption
+                                  .map(h => getType(h)(tagOf(typeParam), ClassTag(h.getClass), rm))
+                                  .getOrElse(typeParam)
+                        val newClassName = className.takeWhile(_ != '[') +
+                                           "[" +
+                                           createStringRepresentation(tupleType)() +
+                                           "]"
+                        val seq = asList.map(e => convertToXML(e, mappings)(tagOf(tupleType), ClassTag(e.getClass)))
+                        (newClassName, seq)
                     case typeParam :: Nil =>
-                        arrayToElemSeq(e => convertToXML(e, mappings)(tagOf(typeParam), ClassTag(e.getClass)))
+                        (className, arrayToElemSeq(e => convertToXML(e, mappings)
+                                                        (tagOf(typeParam), ClassTag(e.getClass))))
                     case paramList =>
                         val n = paramList.length
+                        // works for something like Map[Int, String], not something like List[(Int, String)]
                         val parameterizedTupleName = s"scala.Tuple$n" + className.dropWhile(_ != '[')
                         val tupleType = getTypeFromString(parameterizedTupleName)
-                        arrayToElemSeq(e => convertToXML(e, mappings)(tagOf(tupleType), ClassTag(e.getClass)))
+                        (className, arrayToElemSeq(e => convertToXML(e, mappings)
+                                                        (tagOf(tupleType), ClassTag(e.getClass))))
                 }
-                Elem(pre, className, Null, TopScope, true, seq: _*)
+                Elem(pre, newClassName, Null, TopScope, true, seq: _*)
             }
             
             else {
@@ -152,7 +166,7 @@ object RTConverter {
                             if(fieldValue == null)
                                 elem addAttWithPre (valueTypeName, fieldNameStr, NullFlag)
                             else if (isSimpleType(valueType)) {
-                                Elem(pre, newLabel, att, s, false, c:_*).addAttWithPre(valueTypeName,
+                                Elem(pre, newLabel, att, s, true, c:_*).addAttWithPre(valueTypeName,
                                                                                        fieldNameStr,
                                                                                        fieldValue.toString)
                             } else {
@@ -160,10 +174,10 @@ object RTConverter {
                                                     fieldType
                                                 else
                                                     valueType
-                                Elem(pre, newLabel, att, s, false, c ++
-                                                                   convertToXML(fieldValue, mappings, fieldNameStr)
-                                                                               (tagOf(savedType),
-                                                                                ClassTag(fieldValue.getClass)) : _*)
+                                Elem(pre, newLabel, att, s, true, c ++
+                                                                  convertToXML(fieldValue, mappings, fieldNameStr)
+                                                                              (tagOf(savedType),
+                                                                               ClassTag(fieldValue.getClass)) : _*)
                             }
                     }
             }

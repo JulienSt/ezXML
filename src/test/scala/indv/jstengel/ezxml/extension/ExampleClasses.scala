@@ -114,4 +114,12 @@ object ExampleClasses {
         }
     }
     
+    class StrangeIterator(val id: String,val it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
+        override val iterator : Iterator[(Int, Int)] = it.iterator
+        override def equals (obj : Any) : Boolean = obj match {
+            case other: StrangeIterator => iterator.toList == other.iterator.toList && id == other.id
+        }
+        override def toString () : String = s"StrangeIterator($id, $it)"
+    }
+    
 }

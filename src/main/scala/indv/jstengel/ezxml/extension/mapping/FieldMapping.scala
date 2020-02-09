@@ -1,6 +1,6 @@
 package indv.jstengel.ezxml.extension.mapping
 
-import indv.jstengel.ezxml.extension.NotNothingObject.NotNothing
+import NotNothingObject.NotNothing
 
 import scala.reflect.runtime.universe.TypeTag
 

@@ -7,9 +7,12 @@ import indv.jstengel.ezxml.extension.ct.Xml
 object AnnotatedExampleClasses {
     
     // todo
-//    @Xml
-    class StrangeIterator(id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
+    @Xml class AnnotatedStrangeIterator(id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
         override val iterator : Iterator[(Int, Int)] = it.iterator
+        override def equals (obj : Any) : Boolean = obj match {
+            case other: AnnotatedStrangeIterator => iterator.toList == other.iterator.toList && id == other.id
+        }
+        override def toString () : String = s"StrangeIterator($id, $it)"
     }
     
     trait IntSet {

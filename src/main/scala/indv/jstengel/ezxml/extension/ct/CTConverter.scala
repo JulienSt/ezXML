@@ -4,7 +4,7 @@ package indv.jstengel.ezxml.extension.ct
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 import scala.xml.Elem
-import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.isSimple
+import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{isSimple, getTypeParams}
 import indv.jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
 
 import scala.language.higherKinds
@@ -306,11 +306,25 @@ object CTConverter {
                              (a         : c.Expr[A],
                               mappings  : Option[c.Expr[FieldMappings]],
                               fieldName : Option[c.Expr[String]])
-                             (implicit ATag : c.WeakTypeTag[A]) : c.Expr[Elem] = { import c.universe._
-              
-        val aType = ATag.tpe
-        val fullTypeName = aType.typeSymbol.fullName // todo is missing typeParameter in string
-        println(fullTypeName)
+                             (implicit ATag : c.WeakTypeTag[A]) : c.Expr[Elem] = {
+        import c.universe._
+        
+        /**
+         * creates a string representation for a given type, such that it can be loaded through RTLoader.load,
+         * CTLoader.obj, or getTypeFromString
+         * @param t the type that will be converted to a string
+         * @param typeParams the type params that will be included in the string representation of t
+         * @return a String representation for type t in the for of t[typeParams]
+         */
+        def createStringRepresentation (t : Type)
+                                       (typeParams : List[Type] = getTypeParams(c)(t)): String =
+            if (typeParams.isEmpty)
+                t.typeSymbol.fullName
+            else
+                s"${t.typeSymbol.fullName}[${typeParams.map(t => createStringRepresentation(t)()).mkString(",")}]"
+        
+        val aType: Type = ATag.tpe
+        val fullTypeName = createStringRepresentation(aType)() // todo is missing typeParameter in string
         val typeAsExpr = c.Expr[String](q"$fullTypeName")
         
         if (isSimple(c)(aType))
@@ -365,6 +379,7 @@ object CTConverter {
                              else
                                  q"$a.$fName"
                          
+                         // todo if the type already has a conversion method, call that instead
                          if (isSimple(c)(field.typeSignature))
                              q"""$quote % scala.xml.Attribute(${ field.typeSignature.typeSymbol.fullName.toString },
                                                               ${ fName.toString },

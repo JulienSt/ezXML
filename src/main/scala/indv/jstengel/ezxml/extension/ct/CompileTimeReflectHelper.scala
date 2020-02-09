@@ -29,4 +29,15 @@ object CompileTimeReflectHelper {
             case _ : NullPointerException => false
         }
     
+    /**
+     * @param tpe the type for which the type parameters will be extracted
+     * @return All TypeParameters as a List corresponding to tpe
+     */
+    def getTypeParams (c : blackbox.Context)(tpe: c.universe.Type): List[c.universe.Type] = tpe match {
+        case c.universe.TypeRef(_, _, args) => args.asInstanceOf[List[c.universe.Type]]
+        case _ => List()
+    }
+    
+    
+    
 }

@@ -1,4 +1,4 @@
-package indv.jstengel.ezxml.extension
+package indv.jstengel.ezxml.extension.mapping
 
 
 import scala.annotation.implicitNotFound

@@ -49,7 +49,7 @@ object CTLoadingTest extends App {
     val l = List(1, 2, 3, 4, 5)
     println(obj[List[Int]](l.xml))
     println(obj[List[Int]](xml(l)))
-    
+
     import scala.runtime.ScalaRunTime.stringOf
     val ar = Array(1, 2, 3, 4, 5)
     println(stringOf(obj[Array[Int]](l.xml)))

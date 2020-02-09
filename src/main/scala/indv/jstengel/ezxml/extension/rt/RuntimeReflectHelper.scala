@@ -261,6 +261,30 @@ private[rt] object RuntimeReflectHelper {
             } else
                 typeRef(seqType, seqSymbol, List())
         }
+    
+        /**
+         * Some Tuples are special for some reason (like (Int, Int) or (Double, Double)
+         * These are marked with $ in their complete type name
+         * @param symbol the symbol of the tuple
+         * @return true, if the tuple is special
+         */
+        def isSpecialTuple(symbol: Symbol): Boolean = {
+            val name = symbol.fullName
+            name.startsWith("scala.Tuple") && name.contains("$")
+        }
+    
+        /**
+         * load the correct type for a special tuple type (as determined by isSpecialTuple)
+         * @param a the tuple in form of Any
+         * @return the correct type, that can also be understood by a loading function
+         */
+        def getTupleType(a: Any): Type = {
+            val aAsProduct = a.asInstanceOf[Product]
+            val n = aAsProduct.productArity
+            val typeAsStr =
+                s"scala.Tuple$n[" + aAsProduct.productIterator.map(getType(_).typeSymbol.fullName).mkString(",") + "]"
+            getTypeFromString(typeAsStr)
+        }
         
         val tpe = tt.tpe
         val reflectedSymbol = rm.reflect(a).symbol
@@ -292,6 +316,8 @@ private[rt] object RuntimeReflectHelper {
                      createSeqType(a)
             else if ( isColonColonType(returnType) )
                      createListType(a)
+            else if (isSpecialTuple(reflectedSymbol))
+                     getTupleType(a)
             else
                 returnType
         }
@@ -299,6 +325,8 @@ private[rt] object RuntimeReflectHelper {
             createSeqType(a)
         else if ( isColonColonType(tpe) )
             createListType(a)
+        else if (isSpecialTuple(reflectedSymbol))
+            getTupleType(a)
         else
             tpe
     }
