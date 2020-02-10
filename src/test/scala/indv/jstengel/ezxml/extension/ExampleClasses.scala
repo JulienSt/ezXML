@@ -122,4 +122,8 @@ object ExampleClasses {
         override def toString () : String = s"StrangeIterator($id, $it)"
     }
     
+    case class RTSpecialTypeParameterTestClass1[T1, T2, T3](a: T1, b: T2, c: T1, d: T3)
+    
+    case class RTSpecialTypeParameterTestClass2[T1, T2](a: T2, b: T1, c: T1*)
+    
 }

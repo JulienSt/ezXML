@@ -118,4 +118,9 @@ class RTLoadingTest extends FlatSpec with BasicRtLoadTest {
     test(new AnnotatedIntList(1, 2, 3, 4, 5, 6))
     test(new StrangeIterator("testID", List((1, 2), (3, 4), (5, 6))))
     
+    test(new AnnotatedStrangeIterator("testID", List((1, 2), (3, 4), (5, 6))))
+    
+    test(RTSpecialTypeParameterTestClass1(1, "test", 2, 4.56))
+    test(RTSpecialTypeParameterTestClass2("test", 1, 1, 2, 3, 4, 5))
+    
 }

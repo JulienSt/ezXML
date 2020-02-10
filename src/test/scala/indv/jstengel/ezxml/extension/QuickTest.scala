@@ -1,10 +1,9 @@
 package indv.jstengel.ezxml.extension
 
-import indv.jstengel.ezxml.extension.AnnotatedExampleClasses.AnnotatedStrangeIterator
+import indv.jstengel.ezxml.extension.AnnotatedExampleClasses.{AnnotatedIntList, AnnotatedStrangeIterator, CTSpecialTypeParameterTestClass2}
 import indv.jstengel.ezxml.extension.RTWrappers.{ElemWrapper, ObjWrapper}
 import indv.jstengel.ezxml.extension.ct.CTLoader.obj
 import indv.jstengel.ezxml.core.SimpleWrapper.NodeWrapper
-import indv.jstengel.ezxml.extension.AnnotatedExampleClasses.AnnotatedIntList
 import indv.jstengel.ezxml.extension.ExampleClasses.StrangeIterator
 
 object QuickTest extends App {
@@ -14,10 +13,9 @@ object QuickTest extends App {
     //    import ru._
     //    private implicit val rm: Mirror = rt.currentMirror
     
-    println(new AnnotatedStrangeIterator("testID", List((1, 2), (3, 4), (5, 6))).xml.toPrettyXMLString)
-    println(new AnnotatedStrangeIterator("testID", List((1, 2), (3, 4), (5, 6))).xml.obj[AnnotatedStrangeIterator])
+    // todo lambdas? but not before the first release
+    //    class SpecialTypeParameterTestClass[T1, T2](a: T2, b: T1, c: T1 => T2, d: T2 => T1)
     
-    println(new StrangeIterator("testID", List((1, 2), (3, 4), (5, 6))).xml.toPrettyXMLString)
-    println(new StrangeIterator("testID", List((1, 2), (3, 4), (5, 6))).xml.obj[StrangeIterator])
+    new CTSpecialTypeParameterTestClass2("test", 1, 2, 3, 4, 5, 6, 7, 8).xml.toPrettyXMLString
     
 }

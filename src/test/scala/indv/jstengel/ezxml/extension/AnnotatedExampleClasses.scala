@@ -1,18 +1,35 @@
 package indv.jstengel.ezxml.extension
 
 
-import indv.jstengel.ezxml.extension.ct.Xml
+import indv.jstengel.ezxml.extension.ct.{CTLoader, Xml}
+
+import scala.xml.{Elem, PrefixedAttribute, Text}
 
 
 object AnnotatedExampleClasses {
     
-    // todo
-    @Xml class AnnotatedStrangeIterator(id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
+//    @Xml class SpecialTypeParameterTestClass[T1, T2, T3](a: T1, b: T2, c: T1, d: T3) {
+//        val (a1, b1, c1, d1) = (a, b, c, d)
+//        override def equals (obj : Any) : Boolean = obj match {
+//            case other: SpecialTypeParameterTestClass[T1, T2, T3] =>
+//                a == other.a1 &&
+//                b == other.b1 &&
+//                c == other.c1 &&
+//                d == other.d1
+//        }
+//        override def toString : String = s"SpecialTypeParameterTestClass($a, $b, $c, $d)"
+//    }
+    
+    @Xml class CTSpecialTypeParameterTestClass2[T1, T2](a: T2, b: T1, c: T1*) {
+    
+    }
+    
+    @Xml class AnnotatedStrangeIterator(val id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
         override val iterator : Iterator[(Int, Int)] = it.iterator
         override def equals (obj : Any) : Boolean = obj match {
             case other: AnnotatedStrangeIterator => iterator.toList == other.iterator.toList && id == other.id
         }
-        override def toString () : String = s"StrangeIterator($id, $it)"
+        override def toString : String = s"AnnotatedStrangeIterator($id, $it)"
     }
     
     trait IntSet {

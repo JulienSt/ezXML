@@ -84,6 +84,7 @@ private[rt] object RuntimeReflectHelper {
     /**
      * a type is considered simple (in this library at least), when it is a sub type of AnyVal, Number, or String
      * and a value of that type can therefor easily be extracted from a String
+     * (mirrors indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.isSimple)
      * @param tpe the type that will be checked
      * @return true, if the type is a sub type of AnyVal, Number, or String. false if that is not the case
      *         (and java.lang.boolean, since that is not inheriting from number for some reason)

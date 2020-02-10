@@ -63,7 +63,6 @@ object CTLoadingTest extends App {
 //                                                   .child
 //                                                   .collectFirst{case c: scala.xml.Elem if c.prefix=="it" => c}
 //                                                   .get))
-    
-    println(CTConverter.xml((1, 2))) // <- for some reason this is without typeParameters
-    
+
+
 }
