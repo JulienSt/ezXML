@@ -22,6 +22,7 @@ import internal.typeRef
  * Everything inside this object is used to aid in runtime reflections and minimize duplicate code between loading and
  * converting objects.
  */
+//private[rt] object RuntimeReflectHelper {
 private[rt] object RuntimeReflectHelper {
     
     private val AnyValType = typeOf[AnyVal]

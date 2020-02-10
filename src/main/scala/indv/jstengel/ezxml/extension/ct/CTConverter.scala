@@ -1,18 +1,13 @@
 package indv.jstengel.ezxml.extension.ct
 
 
-import scala.language.experimental.macros
-import scala.reflect.macros.blackbox
-import scala.xml.Elem
-import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{
-    isSimple,
-    getTypeParams,
-    isConstructedThroughIterable,
-    isMacroCallingEnclosingClass
-}
+import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{getTypeParams, isConstructedThroughIterable, isMacroCallingEnclosingClass, isSimple}
 import indv.jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
 
+import scala.language.experimental.macros
 import scala.language.higherKinds
+import scala.reflect.macros.blackbox
+import scala.xml.Elem
 
 
 
@@ -160,11 +155,11 @@ object CTConverter {
                 t.typeSymbol.fullName
             else
                 s"${t.typeSymbol.fullName}[${typeParams.map(t => createStringRepresentation(t)()).mkString(",")}]"
-        
-        val aType: Type = ATag.tpe
-        val typeParams = getTypeParams(c)(aType)
+    
+        val aType : Type = ATag.tpe
+        val typeParams   = getTypeParams(c)(aType)
         val fullTypeName = createStringRepresentation(aType)() // todo is missing typeParameter in string
-        val typeAsExpr = c.Expr[String](q"$fullTypeName")
+        val typeAsExpr   = c.Expr[String](q"$fullTypeName")
         
         if (isSimple(c)(aType))
             c.Expr[Elem](q"""
@@ -209,6 +204,7 @@ object CTConverter {
                                        .collectFirst { case m: MethodSymbol if m.isPrimaryConstructor => m }
                                        .get
                 val typeMap = getTypeParams(c)(constructor.returnType).zip(getTypeParams(c)(aType)).toMap
+                val isCallingEnclosingClass = isMacroCallingEnclosingClass(c)(aType)
                 constructor
                     .paramLists
                     .head
@@ -218,8 +214,8 @@ object CTConverter {
                                                  scala.xml.TopScope,
                                                  true,
                                                  Seq(): _*)""") { case (quote, field : Symbol) =>
-                        val fName = TermName(field.name.decodedName.toString)
-                        val fieldSig = field.typeSignature
+                        val fName     = TermName(field.name.decodedName.toString)
+                        val fieldSig  = field.typeSignature
                         val fieldType = typeMap.getOrElse(fieldSig, fieldSig)
                         
                         // todo annotations
@@ -240,12 +236,26 @@ object CTConverter {
 //                        ))
                         
                         val fieldCall =
-                            if(isMacroCallingEnclosingClass(c, fullTypeName))
+                            if(isCallingEnclosingClass)
                                 q"$fName" // todo check if field is annotated with substitution
                             else
                                 q"$a.$fName"
                         
                         // todo if the type already has a conversion method, call that instead
+//                        if (fieldType.typeSymbol.isAbstract && fieldSig.baseClasses.length == 1)
+//                            throw new TypeNotPresentException(
+//                                fieldType.toString,
+//                                new Exception("Due to some complicated issues during compile time," +
+//                                              "your class can not be converted to xml with this macro." +
+//                                              "\nPlease use the runtime method instead. " +
+//                                              "As an alternative")
+//                                )
+//                        else if(fieldType.typeSymbol.isAbstract)
+//                            q"""indv.jstengel.ezxml.extension.rt.RTConverter.convertToXML(
+//                                    $fieldCall,
+//                                    ${ mappings.getOrElse(c.Expr[FieldMappings](q"Seq()")) },
+//                                    ${ fName.toString })
+//                            """
                         if (isSimple(c)(fieldType))
                             q"""$quote % scala.xml.Attribute(${ fieldType.typeSymbol.fullName.toString },
                                                              ${ fName.toString },

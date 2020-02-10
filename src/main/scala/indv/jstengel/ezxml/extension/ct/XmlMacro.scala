@@ -87,7 +87,8 @@ object XMLMacro {
                 
                 q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents {
                         $self =>
-                        def saveAsXml: scala.xml.Elem = indv.jstengel.ezxml.extension.ct.CTConverter.xmlAnnotation(this)
+                        def saveAsXml[..$tparams]: scala.xml.Elem =
+                            indv.jstengel.ezxml.extension.ct.CTConverter.xmlAnnotation[$tpname[..$tparams]](this)
                         ..${newStats.flatMap(_._1)}
                     }
                     ..$newTail"""

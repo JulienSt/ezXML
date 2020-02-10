@@ -21,12 +21,12 @@ object CompileTimeReflectHelper {
     /**
      * to determine, if we have access to private fields or not, this class checks where a macro was called from
      * @param c context, to access types and symbols, during compile time
-     * @param fullTypeName the name of the enclosing class
+     * @param tpe the type of the supposed enclosing class
      * @return true, if the macro is called to convert the enclosing class
      */
-    private[ct] def isMacroCallingEnclosingClass (c : blackbox.Context, fullTypeName : String): Boolean =
+    private[ct] def isMacroCallingEnclosingClass (c : blackbox.Context)(tpe : c.Type): Boolean =
         try {
-            c.reifyEnclosingRuntimeClass.tpe.toString.contains(fullTypeName)
+            c.reifyEnclosingRuntimeClass.tpe.toString.contains(tpe.typeSymbol.fullName)
         } catch {
             case _ : NullPointerException => false
         }

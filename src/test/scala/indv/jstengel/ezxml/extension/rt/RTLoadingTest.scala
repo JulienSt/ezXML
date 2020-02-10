@@ -78,14 +78,6 @@ class RTLoadingTest extends FlatSpec with BasicRtLoadTest {
                             new NonEmpty(13,
                                          EmptyIntSet,
                                          EmptyIntSet))
-
-    def getCorrectName(className: String, fieldName: String): Option[String] = {
-        val FieldMapping = Map("scala.xml.Elem" -> Map("attributes1" -> "attributes"),
-                               "scala.xml.Text" -> Map("data" -> "text"),
-                               "scala.xml.UnprefixedAttribute" -> Map("next1" -> "next"))
-        FieldMapping.get(className).flatMap(_.get(fieldName))
-    }
-    
     test(tree)
     
     test(ccNonIterIntList(1, 2, 3, 4, 5))
@@ -122,5 +114,7 @@ class RTLoadingTest extends FlatSpec with BasicRtLoadTest {
     
     test(RTSpecialTypeParameterTestClass1(1, "test", 2, 4.56))
     test(RTSpecialTypeParameterTestClass2("test", 1, 1, 2, 3, 4, 5))
+    
+    test(new PrivateConstructorTest(5))
     
 }

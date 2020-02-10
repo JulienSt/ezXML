@@ -126,4 +126,12 @@ object ExampleClasses {
     
     case class RTSpecialTypeParameterTestClass2[T1, T2](a: T2, b: T1, c: T1*)
     
+    class PrivateConstructorTest private (val a : Int*) {
+        def this(b: Int) = this(b, b)
+        override def equals (obj : Any) : Boolean = obj match {
+            case other: PrivateConstructorTest => a == other.a
+        }
+        override def toString : String = s"PrivateConstructorTest(${a.mkString(", ")})"
+    }
+    
 }

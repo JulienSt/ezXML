@@ -7,22 +7,24 @@ import scala.xml.{Elem, PrefixedAttribute, Text}
 
 
 object AnnotatedExampleClasses {
-    
-//    @Xml class SpecialTypeParameterTestClass[T1, T2, T3](a: T1, b: T2, c: T1, d: T3) {
-//        val (a1, b1, c1, d1) = (a, b, c, d)
-//        override def equals (obj : Any) : Boolean = obj match {
-//            case other: SpecialTypeParameterTestClass[T1, T2, T3] =>
-//                a == other.a1 &&
-//                b == other.b1 &&
-//                c == other.c1 &&
-//                d == other.d1
-//        }
-//        override def toString : String = s"SpecialTypeParameterTestClass($a, $b, $c, $d)"
-//    }
-    
-    @Xml class CTSpecialTypeParameterTestClass2[T1, T2](a: T2, b: T1, c: T1*) {
-    
+
+    @Xml
+    class AnnotatedTypeParameterTestClass1[T1, T2, T3] (val a : T1, val b : T2, val c : T1, val d : T3) {
+//    @Xml class AnnotatedTypeParameterTestClass1[T1, T2, T3] (a : T1, b : T2, c : T1, d : T3) {
+        val (a1, b1, c1, d1) = (a, b, c, d)
+        override def equals (obj : Any) : Boolean = obj match {
+            case other: AnnotatedTypeParameterTestClass1[T1, T2, T3] =>
+                a == other.a1 &&
+                b == other.b1 &&
+                c == other.c1 &&
+                d == other.d1
+        }
+        override def toString : String = s"AnnotatedTypeParameterTestClass1($a, $b, $c, $d)"
     }
+    
+//    @Xml class CTSpecialTypeParameterTestClass2[T1, T2](a: T2, b: T1, c: T1*) {
+//
+//    }
     
     @Xml class AnnotatedStrangeIterator(val id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
         override val iterator : Iterator[(Int, Int)] = it.iterator
