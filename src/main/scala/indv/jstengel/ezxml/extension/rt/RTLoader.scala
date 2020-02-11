@@ -1,22 +1,8 @@
 package indv.jstengel.ezxml.extension.rt
 
 
-import RuntimeReflectHelper.{
-    getTypeFromString,
-    NullFlag,
-    companionMethodExtraction,
-    isSimpleType,
-    stringToSimpleValue,
-    iterableType,
-    productType,
-    arrayType,
-    getTypeParams,
-    tagOf,
-    minimumBaseClasses,
-    asArrayType,
-    classTagOf,
-    isConstructorMissing
-}
+import RuntimeReflectHelper.{NullFlag, arrayType, asArrayType, classTagOf, companionMethodExtraction, getTypeFromString, getTypeParams, isConstructorMissing, isSimpleType, iterableType, minimumBaseClasses, productType, stringToSimpleValue, tagOf}
+import indv.jstengel.ezxml.extension.XmlObjectTrait
 
 import scala.reflect.ClassTag
 import scala.xml.{Elem, PrefixedAttribute, Text}
@@ -28,6 +14,8 @@ object RTLoader {
     import rt.{universe => ru}
     import ru._
     private implicit val rm : ru.Mirror = rt.currentMirror
+    
+    private val loadableType = typeOf[XmlObjectTrait]
     
     /**
      * Creates a constructor from the given elem through reflections and then calls said constructor to reconstruct
@@ -44,9 +32,7 @@ object RTLoader {
         val loadedSymbol = loadedType.typeSymbol
         val companion = loadedSymbol.asClass.companion
         
-        if(companion.typeSignature
-                    .members
-                    .exists{ case m : MethodSymbol => m.name.toString == "loadFromXML" case _ => false})
+        if(companion.typeSignature <:< loadableType)
             companion.typeSignature
                      .members
                      .collectFirst(companionMethodExtraction(companion, "loadFromXML"))

@@ -16,11 +16,24 @@ class Xml extends StaticAnnotation {
 }
 
 object XMLMacro {
-    def impl (c : Context)(annottees : c.Expr[Any]*) : c.Expr[Any] = {
+    def impl (c : Context)(annottees : c.Expr[Any]*): c.Expr[Any] = {
         import c.universe._
+        
         val resultAsTree = annottees map ( _.tree ) match {
             case all @ q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns }
                      with ..$parents { $self => ..$stats } """ :: tail =>
+                
+                if (tparams.asInstanceOf[List[Tree]].nonEmpty)
+                    c.abort(c.enclosingPosition,
+                            """The class you are trying to annotate has type parameters.
+                              |Due to compilation order, the necessary type information to create the methods
+                              |is not available. Therefore you have to remove the @Xml annotation again
+                              |for your program to compile.
+                              |If you need the compile time function and cannot use the runtime variants,
+                              |you can simply use CTConverter.xml or CTLoader.obj""".stripMargin)
+                
+                val newParents = parents.asInstanceOf[List[Tree]] :::
+                                 List(tq"indv.jstengel.ezxml.extension.XmlClassTrait")
                 
                 /* retrieve all the fields outside the constructor with annotations */
                 val newStats = stats.asInstanceOf[List[Tree]].map{
@@ -68,26 +81,29 @@ object XMLMacro {
                     case stat                                         =>
                         (List(stat), None)
                 }
+    
+                
                 
                 /* check for companion object */
-//                val newTail = tail
                 val newTail = tail match {
                     case q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$body }" :: _ =>
+                        val newParents = parents.asInstanceOf[List[Tree]] :::
+                                         List(tq"indv.jstengel.ezxml.extension.XmlObjectTrait")
                         q"""$mods object $tname extends { ..$earlydefns } with ..$parents { $self =>
                                 def loadFromXML(elem: scala.xml.Elem) : $tpname[..$tparams] =
                                     indv.jstengel.ezxml.extension.ct.CTLoader.annotationObj[$tpname[..$tparams]](elem)
                             ..$body
                             }"""
                     case _ =>
-                        q"""object ${TermName(tpname.toString)} {
+                        q"""object ${TermName(tpname.toString)} extends indv.jstengel.ezxml.extension.XmlObjectTrait {
                                 def loadFromXML(elem: scala.xml.Elem) : $tpname[..$tparams] =
                                     indv.jstengel.ezxml.extension.ct.CTLoader.annotationObj[$tpname[..$tparams]](elem)
                             }"""
                 }
                 
-                q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents {
-                        $self =>
-                        def saveAsXml[..$tparams]: scala.xml.Elem =
+                q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with
+                    ..$newParents { $self =>
+                        def saveAsXml: scala.xml.Elem =
                             indv.jstengel.ezxml.extension.ct.CTConverter.xmlAnnotation[$tpname[..$tparams]](this)
                         ..${newStats.flatMap(_._1)}
                     }

@@ -30,11 +30,11 @@ object MappingTest extends App {
     
     val b = B(123, "test")
     
-    println(RTLoader.load[B](RTLoader.load[Elem](CTConverter.xml(CTConverter.xml(b), Seq(
-        FieldMapping[Elem]("attributes1" -> "attributes"),
-        FieldMapping[Text]("data" -> "text"),
-        FieldMapping[UnprefixedAttribute]("next1" -> "next")
-    )))))
+//    println(RTLoader.load[B](RTLoader.load[Elem](CTConverter.xml(CTConverter.xml(b), Seq(
+//        FieldMapping[Elem]("attributes1" -> "attributes"),
+//        FieldMapping[Text]("data" -> "text"),
+//        FieldMapping[UnprefixedAttribute]("next1" -> "next")
+//    )))))
     
 //    println(CTConverter.xml(b).toPrettyXMLString)
 //

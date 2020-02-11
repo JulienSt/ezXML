@@ -1,20 +1,11 @@
 package indv.jstengel.ezxml.extension.rt
 
 
-import indv.jstengel.ezxml.extension.StringTypeTree
+import indv.jstengel.ezxml.extension.{StringTypeTree, XmlClassTrait}
 
 import scala.collection.IterableOnce
 import scala.reflect.{ClassTag, api}
-import scala.reflect.runtime.universe.{
-    MethodMirror,
-    MethodSymbol,
-    Mirror,
-    Symbol,
-    Type,
-    TypeRef,
-    TypeTag,
-    internal,
-    typeOf}
+import scala.reflect.runtime.universe.{MethodMirror, MethodSymbol, Mirror, Symbol, Type, TypeRef, TypeTag, internal, typeOf}
 import internal.typeRef
 
 

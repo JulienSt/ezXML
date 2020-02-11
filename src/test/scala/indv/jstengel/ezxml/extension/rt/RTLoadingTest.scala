@@ -41,7 +41,7 @@ class RTLoadingTest extends FlatSpec with BasicRtLoadTest {
     val eitherTest: Either[Int, List[List[Int]]] = Right(List(List(23, 52), List(1, 2, 3, 4)))
     test(eitherTest)
     test(Map(1 -> "TestInput1", 2 -> "TestInput2"))
-    CCWithMap(Map(2 -> CC1(5, "90ß"), 53 -> CC1(90, "965ß")))
+    test(CCWithMap(Map(2 -> CC1(5, "90ß"), 53 -> CC1(90, "965ß"))))
     test(new OptionTest(Some(34)))
     test(new ListClass(List(3, 4, 5, 6)))
     test(TypeParamTest(234))
@@ -67,18 +67,18 @@ class RTLoadingTest extends FlatSpec with BasicRtLoadTest {
     test(Tuple1(applyTest))
     test(Some(3))
     
-    val tree = new NonEmpty(4,
-                            new NonEmpty(6,
-                                         new NonEmpty(19,
-                                                      EmptyIntSet,
-                                                      EmptyIntSet),
-                                         new NonEmpty(90,
-                                                      EmptyIntSet,
-                                                      EmptyIntSet)),
-                            new NonEmpty(13,
-                                         EmptyIntSet,
-                                         EmptyIntSet))
-    test(tree)
+//    val tree = new NonEmpty(4,
+//                            new NonEmpty(6,
+//                                         new NonEmpty(19,
+//                                                      EmptyIntSet,
+//                                                      EmptyIntSet),
+//                                         new NonEmpty(90,
+//                                                      EmptyIntSet,
+//                                                      EmptyIntSet)),
+//                            new NonEmpty(13,
+//                                         EmptyIntSet,
+//                                         EmptyIntSet))
+//    test(tree)
     
     test(ccNonIterIntList(1, 2, 3, 4, 5))
     test(new nonIterIntList(1, 2, 3, 4, 5, 6))
@@ -107,7 +107,7 @@ class RTLoadingTest extends FlatSpec with BasicRtLoadTest {
     val emptyTupleList: List[(Int, String)] = List()
     test(emptyTupleList)
     
-    test(new AnnotatedIntList(1, 2, 3, 4, 5, 6))
+//    test(new AnnotatedIntList(1, 2, 3, 4, 5, 6))
     test(new StrangeIterator("testID", List((1, 2), (3, 4), (5, 6))))
     
     test(new AnnotatedStrangeIterator("testID", List((1, 2), (3, 4), (5, 6))))

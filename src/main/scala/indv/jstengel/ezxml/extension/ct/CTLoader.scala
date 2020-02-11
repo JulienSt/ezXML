@@ -1,6 +1,8 @@
 package indv.jstengel.ezxml.extension.ct
 
-import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{getTypeParams, isConstructedThroughIterable, isSimple}
+import indv.jstengel.ezxml.extension.XmlObjectTrait
+import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{
+    getActualFieldType, getTypeParams, isConstructedThroughIterable, isSimple, isObject}
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
@@ -34,46 +36,94 @@ object CTLoader {
          * CTLoader.obj, or getTypeFromString
          * Sadly, this needs to be a nested function and can not be generalize, due to compiler problems
          * @param t the type that will be converted to a string
-         * @param typeParams the type params that will be included in the string representation of t
          * @return a String representation for type t in the for of t[typeParams]
          */
-        def createStringRepresentation (t : Type)
-                                       (typeParams : List[Type] = getTypeParams(c)(t)): String =
-            if (typeParams.isEmpty)
-                t.typeSymbol.fullName
+        def createStringRepresentation (t : Type)(typeParams : List[Type] = getTypeParams(c)(t)): String = {
+            val symbol = t.typeSymbol
+            if (symbol.isAbstract && t.baseClasses.length == 1)
+                symbol.name.toString
+            else if (typeParams.isEmpty)
+                     symbol.fullName
             else
-                s"${t.typeSymbol.fullName}[${typeParams.map(t => createStringRepresentation(t)()).mkString(",")}]"
+                s"${symbol.fullName}[${typeParams.map(t => createStringRepresentation(t)()).mkString(",")}]"
+        }
         
-        val aType = ATag.tpe
+        val aType        = ATag.tpe
+        val aTypeSymbol  = aType.typeSymbol
+        val typeParams   = getTypeParams(c)(aType)
+        val companion    = aTypeSymbol.asClass.companion
+        val companionSig = companion.typeSignature
         
-        if (isSimple(c)(aType))
+        if (!isCalledFromAnnotation && companionSig <:< typeOf[XmlObjectTrait])
+            c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => $companion.${TermName("loadFromXML")}(elem)""")
+
+        else if (aTypeSymbol.isModuleClass){
+//            c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => $aType""")
+            c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => ${aTypeSymbol.owner.typeSignature.member(aTypeSymbol.name.toTermName)}""")
+        }
+        
+        else if(isObject(c)(aType, companionSig)){
+            c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => $companion""")
+        }
+        
+        else if (isSimple(c)(aType))
             if (aType <:< c.typeOf[String])
                 c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => (elem \@ "value")""")
             else
                 c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => (elem \@ "value")${ tagToFunctionCall(c)(ATag) }""")
 
+            //todo
+//        else if (aType <:< typeOf[scala.Product]){
+//            val tparam = aType match {
+//                case TypeRef(_, _, tps)         => tps
+//            }
+//            val companionMembers = companionSig.members
+//            val tree = companionMembers.collectFirst{case m : MethodSymbol if m.name.toString == "apply" =>
+//                q"""(elem: scala.xml.Elem) => $m( elem.child.map{case (e: scala.xml.Elem) =>
+//                            indv.jstengel.ezxml.extension.ct.CTLoader.obj[..$tparam](e)}: _*)"""
+//            }.get
+//            c.Expr[Elem => A](tree)
+//        }
+        
         else if (aType <:< typeOf[Array[_]] || isConstructedThroughIterable(c)(aType, isCalledFromAnnotation)) {
-            val (symbol, tparam) = aType match {
-                case TypeRef(_, symbol, tparam::Nil) => (symbol.fullName, createStringRepresentation(tparam)())
-                case TypeRef(_, symbol, tps)         => (symbol.fullName, "(" + tps.map(_.toString).mkString(",") + ")")
+            val tparam = aType match {
+                case TypeRef(_, symbol, tparam::Nil) => tq"$tparam"
+                case TypeRef(_, symbol, tps)         => tq"(..$tps)"
             }
-            val treeAsString =
-                s"""(elem: scala.xml.Elem) =>
-                   |    $symbol(elem.child.map{case (e: scala.xml.Elem) =>
-                   |        indv.jstengel.ezxml.extension.ct.CTLoader.obj[$tparam](e)}:_*)
-                   |    """.stripMargin
-            c.Expr[Elem => A](c.parse(treeAsString))
+            val companionMembers = companionSig.members
+            val tree = companionMembers
+                .collectFirst{
+                    case m : MethodSymbol if {
+                        val name = m.name.toString
+                         name == "from" || name == "fromSeq"
+                    } =>
+                        q"""(elem: scala.xml.Elem) => {$m( elem.child.map{case (e: scala.xml.Elem) =>
+                            indv.jstengel.ezxml.extension.ct.CTLoader.obj[$tparam](e)}).asInstanceOf[$aType]}"""
+                }
+                .getOrElse{
+                    companionMembers.collectFirst{case m : MethodSymbol if m.name.toString == "apply" =>
+                        q"""(elem: scala.xml.Elem) => $m( elem.child.map{case (e: scala.xml.Elem) =>
+                            indv.jstengel.ezxml.extension.ct.CTLoader.obj[$tparam](e)}: _*)"""
+                    }.get
+                }
+            c.Expr[Elem => A](tree)
+            
         }
 
         else if (aType.typeSymbol.isAbstract)
             c.Expr[Elem => A](q"""(e: scala.xml.Elem) => indv.jstengel.ezxml.extension.rt.RTLoader.load[$aType](e)""")
             
         else {
-            
-            val constructor = aType.decls
-                                   .collectFirst{ case m : MethodSymbol if m.isPrimaryConstructor => m }
-                                   .get
-            val typeMap = getTypeParams(c)(constructor.returnType).zip(getTypeParams(c)(aType)).toMap
+    
+            val constructor             = aType.decls
+                                               .collectFirst{ case m : MethodSymbol if m.isPrimaryConstructor => m}
+                                               .get
+            val constructorTParams      = getTypeParams(c)(constructor.returnType)
+            val classTypeParams         = if ( typeParams.exists(_.toString.contains("<notype>")) )
+                                              constructorTParams
+                                          else
+                                              typeParams
+            val typeMap                 = constructorTParams.zip(classTypeParams).toMap
             val paramLists = constructor.paramLists
     
             if ( paramLists.forall(_.isEmpty) )
@@ -87,11 +137,13 @@ object CTLoader {
                             paramList.zipWithIndex
                                      .foldLeft("("){ case (quote : String, (field : Symbol, index : Int)) =>
                                          val fName           = field.name.decodedName.toString
-                                         val fieldType       = field.typeSignature
-                                         val actualFieldType = typeMap.getOrElse(fieldType, fieldType)
-                                         val isRepeated      = fieldType.toString.endsWith("*")
+                                         val (fieldType, fieldTypeAsString, isRepeated) =
+                                             getActualFieldType(c)(field.typeSignature,
+                                                                   typeMap,
+                                                                   createStringRepresentation(_)())
+                                         
                                          val fieldAsQuote    =
-                                             if ( isSimple(c)(actualFieldType) )
+                                             if ( isSimple(c)(fieldType) )
                                                  s"""(elem.attributes
                                                     |     .collectFirst{
                                                     |         case scala.xml.PrefixedAttribute(_,
@@ -100,23 +152,18 @@ object CTLoader {
                                                     |                                          _) => value
                                                     |     }
                                                     |     .get)${
-                                                     if ( actualFieldType <:< c.typeOf[String] )
+                                                     if ( fieldType <:< c.typeOf[String] )
                                                          ""
                                                      else
-                                                         "." + tagToFunctionCall(c)(c.WeakTypeTag(actualFieldType))}
+                                                         "." + tagToFunctionCall(c)(c.WeakTypeTag(fieldType))}
                                                  |""".stripMargin
-                                             else // todo "else if repeated" has to be added in this chain
+                                             else
                                                  s"""indv.jstengel
                                                  |    .ezxml
                                                  |    .extension
                                                  |    .ct
                                                  |    .CTLoader
-                                                 |    .obj[${
-                                                     if(isRepeated)
-                                                         s"Seq[${actualFieldType.toString.dropRight(1)}]" // todo problems here
-                                                     else
-                                                         fieldType
-                                                 }](elem
+                                                 |    .obj[${fieldTypeAsString}](elem
                                                  |    .child
                                                  |    .collectFirst{case c: scala.xml.Elem if c.prefix == "$fName" => c}
                                                  |    .get)${if(isRepeated) ":_*" else ""}""".stripMargin
