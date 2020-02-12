@@ -13,7 +13,7 @@ My main goal therefore is the simplification of these problems.
  #### Simple Example:
 
  ```scala
-import indv.jstengel.ezxml.core.SimpleWrapper.ElemWrapper
+import jstengel.ezxml.core.SimpleWrapper.ElemWrapper
 import scala.xml.Elem
 
 val elem: Elem =
