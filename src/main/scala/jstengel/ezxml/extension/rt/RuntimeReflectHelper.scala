@@ -1,19 +1,18 @@
 package jstengel.ezxml.extension.rt
 
-import jstengel.ezxml.extension.XmlClassTrait
-
 import scala.collection.IterableOnce
 import scala.reflect.{ClassTag, api}
 import scala.reflect.runtime.universe.{MethodMirror, MethodSymbol, Mirror, Symbol, Type, TypeRef, TypeTag, internal, typeOf}
 import internal.typeRef
 import jstengel.ezxml.extension.StringTypeTree
 
+import scala.reflect.runtime.universe
+
 
 /**
  * Everything inside this object is used to aid in runtime reflections and minimize duplicate code between loading and
  * converting objects.
  */
-//private[rt] object RuntimeReflectHelper {
 private[rt] object RuntimeReflectHelper {
     
     private val AnyValType = typeOf[AnyVal]
@@ -282,7 +281,18 @@ private[rt] object RuntimeReflectHelper {
         val tpe = tt.tpe
         val reflectedSymbol = rm.reflect(a).symbol
         
-        if(reflectedSymbol.isModuleClass)
+        def associateType (returnType : universe.Type) = {
+            if ( isRepeatedType(tpe) )
+                createSeqType(a)
+            else if ( isColonColonType(returnType) )
+                     createListType(a)
+            else if ( isSpecialTuple(reflectedSymbol) )
+                     getTupleType(a)
+            else
+                returnType
+        }
+    
+        if( reflectedSymbol.isModuleClass)
             reflectedSymbol.typeSignature
         else if ( tpe.typeSymbol.isAbstract && !( tpe <:< iterableType ) ) {
             val returnType = reflectedSymbol.asClass.toType
@@ -305,23 +315,11 @@ private[rt] object RuntimeReflectHelper {
                               }
                           }
                           .getOrElse(returnType)
-            else if ( isRepeatedType(tpe) )
-                     createSeqType(a)
-            else if ( isColonColonType(returnType) )
-                     createListType(a)
-            else if (isSpecialTuple(reflectedSymbol))
-                     getTupleType(a)
             else
-                returnType
+                associateType(returnType)
         }
-        else if ( isRepeatedType(tpe) )
-            createSeqType(a)
-        else if ( isColonColonType(tpe) )
-            createListType(a)
-        else if (isSpecialTuple(reflectedSymbol))
-            getTupleType(a)
         else
-            tpe
+            associateType(tpe)
     }
     
     /**

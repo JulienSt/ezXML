@@ -1,8 +1,23 @@
 package jstengel.ezxml.extension.rt
 
-import RuntimeReflectHelper.{NullFlag, arrayType, asArrayType, classTagOf, companionMethodExtraction, getTypeFromString, getTypeParams, isConstructorMissing, isSimpleType, iterableType, minimumBaseClasses, productType, stringToSimpleValue, tagOf}
+
 import jstengel.ezxml.extension.XmlObjectTrait
-import jstengel.ezxml.extension.XmlObjectTrait
+import RuntimeReflectHelper.{
+    NullFlag,
+    arrayType,
+    asArrayType,
+    classTagOf,
+    companionMethodExtraction,
+    getTypeFromString,
+    getTypeParams,
+    isConstructorMissing,
+    isSimpleType,
+    iterableType,
+    minimumBaseClasses,
+    productType,
+    stringToSimpleValue,
+    tagOf
+}
 
 import scala.reflect.ClassTag
 import scala.xml.{Elem, PrefixedAttribute, Text}

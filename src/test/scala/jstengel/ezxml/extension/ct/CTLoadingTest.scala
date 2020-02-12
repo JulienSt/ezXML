@@ -1,15 +1,10 @@
 package jstengel.ezxml.extension.ct
 
-import CtDecoder.obj
-import CtEncoder.{xml, xmlMacro}
-import jstengel.ezxml.extension.AnnotatedExampleClasses.AnnotatedStrangeIterator
-import jstengel.ezxml.extension.AnnotatedExampleClasses.{AnnotatedIntList, AnnotatedStrangeIterator, EmptyIntSet, IntSet, NonEmpty}
+import jstengel.ezxml.extension.AnnotatedExampleClasses._
 import jstengel.ezxml.extension.ExampleClasses
 import jstengel.ezxml.extension.ExampleClasses._
-import jstengel.ezxml.extension.RTWrappers.{ElemWrapper, ObjWrapper}
-import jstengel.ezxml.extension.AnnotatedExampleClasses.{AnnotatedIntList, AnnotatedStrangeIterator, EmptyIntSet, IntSet}
-import jstengel.ezxml.extension.ExampleClasses
-import jstengel.ezxml.extension.ExampleClasses.{ApplyTest, CC1, CC2, CCWithMap, ClassWithArgs, ClassWithArgsAndExtra, CurriedClass, CurriedClass2, CurriedVarArgs, EmptyCaseClass, IntList, ListClass, NestedCC, NestedCC1, NestedCC2, PrivateConstructorTest, RTSpecialTypeParameterTestClass1, RTSpecialTypeParameterTestClass2, StrangeIterator, TestTrait, TypeParamTest, TypeParamTest2, ccCurriedVarArgs, ccIntList, ccNonIterIntList, nonIterIntList}
+import jstengel.ezxml.extension.ct.CtDecoder.obj
+import jstengel.ezxml.extension.ct.CtEncoder.{xml, xmlMacro}
 import org.junit.runner.RunWith
 import org.scalatest.FlatSpec
 import org.scalatestplus.junit.JUnitRunner
@@ -83,7 +78,7 @@ class CTLoadingTest extends FlatSpec {
          xmlMacro[TypeParamTest2[Int, String, List[Int]]], obj[TypeParamTest2[Int, String, List[Int]]])
     val applyTest : TestTrait = ApplyTest("bla", 123)
     test(applyTest, xmlMacro[TestTrait], obj[TestTrait])
-    val nct: TestTrait = new NonCaseRuntTimeTest(12334, "lkjaslkjd", applyTest.asInstanceOf[ApplyTest])
+    val nct: TestTrait = new NonCaseRuntTimeTest(12334, "test", applyTest.asInstanceOf[ApplyTest])
     test(nct, xmlMacro[TestTrait], obj[TestTrait])
 
     val runtTimeList: List[TestTrait] = List(applyTest, nct)
@@ -93,7 +88,7 @@ class CTLoadingTest extends FlatSpec {
     test(bufferTest, xmlMacro[mutable.Buffer[Int]], obj[mutable.ArrayBuffer[Int]])
     // note: for some reason obj[mutable.Buffer[Int]] does not work (it doesn't even compile)
 
-    testArray(Array("heyhey", "blabla"), xmlMacro[Array[String]], obj[Array[String]])
+    testArray(Array("test1", "test2"), xmlMacro[Array[String]], obj[Array[String]])
     testArray(Array(2, 3, 4), xmlMacro[Array[Int]], obj[Array[Int]])
     val n: Option[Int] = None
     test(n, xmlMacro[Option[Int]], obj[Option[Int]])

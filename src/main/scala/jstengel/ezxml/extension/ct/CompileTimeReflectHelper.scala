@@ -71,9 +71,10 @@ private[ct] object CompileTimeReflectHelper {
     /**
      * because the types of the constructor params are likely to be generic, a map has to be applied to get the
      * correct type, that can actually be loaded
-     * @param c context, to access types and symbols, during compile time
-     * @param fieldTypeSig the most generic type signatures of the field
-     * @param typeMap A Map that converts between the given tparams and the generic tparams from the constructor
+     * @param c                          context, to access types and symbols, during compile time
+     * @param fieldTypeSig               the most generic type signatures of the field
+     * @param typeMap                    A Map that converts between the given tparams and the generic tparams from
+     *                                   the constructor
      * @param createStringRepresentation a Function that will give the most accurate string representation containing
      *                                   all the information about the resulting type
      * @return a tuple3, that contains the actual type, a correct string representation of that type and a boolean,
@@ -113,27 +114,29 @@ private[ct] object CompileTimeReflectHelper {
     }
     
     /**
-     *
-     * @param c
-     * @param aType
-     * @param typeParams
-     * @tparam A
-     * @return
+     * This function loads the constructor of givenType and then maps the type parameters of the constructor to the
+     * type parameters of givenType.
+     * @param c context, to access types and symbols, during compile time
+     * @param givenType the type for which the constructor will be loaded
+     * @param typeParams the type params that were given to the macro.
+     *                   These will be more specific than the type parameters of the constructor
+     * @return a [[Tuple3]], where the first element is the constructor, the second is the TypeMap and the third is
+     *         a List of Types, representing the type parameters of givenType
      */
-    def getConstructorWithTypeMap[A](c: blackbox.Context)
-                                    (aType: c.Type,
-                                     typeParams: scala.List[c.Type]) : (c.universe.MethodSymbol,
-                                                                        Map[c.universe.Type, c.Type],
-                                                                        List[c.Type]) =  {
-        val constructor        = aType.decls
-                                      .collectFirst{ case m : c.universe.MethodSymbol if m.isPrimaryConstructor => m }
-                                      .get
-        val constructorTParams = getTypeParams(c)(constructor.returnType)
-        val classTypeParams    = if ( typeParams.exists(_.toString.contains("<notype>")) )
-                                     constructorTParams
-                                 else
-                                     typeParams
-        val typeMap            = constructorTParams.zip(classTypeParams).toMap
+    def getConstructorWithTypeMap(c: blackbox.Context)
+                                 (givenType  : c.Type,
+                                  typeParams : scala.List[c.Type]) : (c.universe.MethodSymbol,
+                                                                     Map[c.universe.Type, c.Type],
+                                                                     List[c.Type]) =  {
+        val constructor     = givenType.decls
+                                       .collectFirst{ case m : c.universe.MethodSymbol if m.isPrimaryConstructor => m }
+                                       .get
+        val constrTParams   = getTypeParams(c)(constructor.returnType)
+        val classTypeParams = if ( typeParams.exists(_.toString.contains("<notype>")) )
+                                  constrTParams
+                              else
+                                  typeParams
+        val typeMap         = constrTParams.zip(classTypeParams).toMap
         (constructor, typeMap, classTypeParams)
     }
     

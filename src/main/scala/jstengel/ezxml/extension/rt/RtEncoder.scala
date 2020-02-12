@@ -4,13 +4,23 @@ import scala.language.reflectiveCalls
 import scala.reflect.ClassTag
 import scala.xml.{Attribute, Elem, Null, Text, TopScope}
 import jstengel.ezxml.core.SimpleWrapper.ElemWrapper
-import RuntimeReflectHelper.{NullFlag, arrayType, asArrayType, classTagOf, createStringRepresentation, getType, getTypeFromString, getTypeParams, isConstructorMissing, isSimpleType, iterableType, tagOf}
-import jstengel.ezxml.extension.XmlClassTrait
 import jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
 import jstengel.ezxml.extension.XmlClassTrait
+import RuntimeReflectHelper.{
+    NullFlag,
+    arrayType,
+    asArrayType,
+    classTagOf,
+    createStringRepresentation,
+    getType,
+    getTypeFromString,
+    getTypeParams,
+    isConstructorMissing,
+    isSimpleType,
+    iterableType,
+    tagOf
+}
 
-
-// https://medium.com/@sinisalouc/overcoming-type-erasure-in-scala-8f2422070d20
 object RtEncoder {
 
     import scala.reflect.{runtime => rt}

@@ -7,7 +7,7 @@ import jstengel.ezxml.extension.rt.{RtDecoder, RtEncoder}
 
 import scala.xml.{Elem, Text, UnprefixedAttribute}
 
-
+// todo create a unit test for this
 object MappingTest extends App {
 
     class A(field: Int) {

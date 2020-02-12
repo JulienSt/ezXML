@@ -44,11 +44,11 @@ object CtDecoder {
      *          (this is automatically added by calling the macro)
      * @param ATag the WeakTypeTag of [[A]], this is automatically filled in by the compiler
      * @tparam A the type that the resulting function will be able to load.
-     * @return a Expression of a function that can load an object of type [[A]] from an [[Elem]]
+     * @return an Expression of a function that can load an object of type [[A]] from an [[Elem]]
      */
     def objImpl[A](c : blackbox.Context)(implicit ATag: c.WeakTypeTag[A]): c.Expr[Elem => A] = {
     
-        import c.universe.{MethodSymbol, Quasiquote, Symbol, TermName, Type, TypeRef, typeOf}
+        import c.universe.{MethodSymbol, Quasiquote, TermName, Type, TypeRef, typeOf}
         
         /**
          * creates a string representation for a given type, such that it can be loaded through RtDecoder.load,
@@ -92,45 +92,6 @@ object CtDecoder {
                 c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => (elem \@ "value")""")
             else
                 c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => (elem \@ "value")${ tagToFunctionCall(c)(ATag) }""")
-
-//        else if (aType <:< typeOf[Product] && !aTypeSymbol.isAbstract) {
-//            companionSig.members.collectFirst{ case apply : MethodSymbol if apply.name.toString == "apply" =>
-//                val paramsLists = apply.paramLists
-//                val applyTParams = getTypeParams(c)(apply.returnType)
-//                val typeMap      = applyTParams.zip(typeParams).toMap
-//                val elem = TermName("elem")
-//                val loadedParamLists = paramsLists.map{ paramList =>
-//                    val loadedFields = paramList.map{ field =>
-//                        val fName = field.name.encodedName.toString
-//                        val (tpe, _, isRepeated) =
-//                            getActualFieldType(c)(field.typeSignature, typeMap, createStringRepresentation(_)())
-//                        if(isSimple(c)(tpe)) {
-//                            if (tpe <:< typeOf[String])
-//                                q"""$elem.attributes.collectFirst{
-//                                        case scala.xml.PrefixedAttribute(_, $fName, scala.xml.Text(value), _) =>
-//                                            value
-//                                    }.get"""
-//                            else
-//                                 q"""$elem.attributes.collectFirst{
-//                                       case scala.xml.PrefixedAttribute(_, $fName, scala.xml.Text(value), _) =>
-//                                           value
-//                                     }.get.${tagToFunctionCall(c)(c.WeakTypeTag(tpe))}"""
-//                        } else if (isRepeated) {
-//                            q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
-//                                    $elem.child
-//                                         .collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }
-//                                         .get):_*"""
-//                        } else
-//                            q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
-//                                    $elem.child
-//                                         .collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }
-//                                         .get)"""
-//                    }
-//                    loadedFields
-//                }
-//                c.Expr[Elem => A](q"""($elem: scala.xml.Elem) => $apply(...$loadedParamLists)""")
-//            }.get
-//        }
         
         else if ( aType <:< typeOf[Array[_]] || isConstructedThroughIterable(c)(aType, isCalledFromCompanion) ) {
             val tparam = aType match {
@@ -150,7 +111,6 @@ object CtDecoder {
                             jstengel.ezxml.extension.ct.CtDecoder.obj[$tparam](e)}: _*)"""
                     }.get
                 }
-            println(tree)
             c.Expr[Elem => A](tree)
         }
 
@@ -169,50 +129,37 @@ object CtDecoder {
                     jstengel.ezxml.extension.rt.RtDecoder.load[$aType](e)""")
                 
             else {
-                val treeAsString = paramLists
-                    .map{ paramList =>
-                        val lastIndex = paramList.length - 1
-                        paramList.zipWithIndex
-                                 .foldLeft("("){ case (quote : String, (field : Symbol, index : Int)) =>
-                                     val fName           = field.name.decodedName.toString
-                                     val (fieldType, fieldTypeAsString, isRepeated) =
-                                         getActualFieldType(c)(field.typeSignature,
-                                                               typeMap,
-                                                               createStringRepresentation(_)())
-                                     
-                                     val fieldAsQuote    =
-                                         if ( isSimple(c)(fieldType) )
-                                             s"""(elem.attributes
-                                                |     .collectFirst{
-                                                |         case scala.xml.PrefixedAttribute(_,
-                                                |                                          "$fName",
-                                                |                                          scala.xml.Text(value),
-                                                |                                          _) => value
-                                                |     }
-                                                |     .get)${
-                                                 if ( fieldType <:< typeOf[String] )
-                                                     ""
-                                                 else
-                                                     "." + tagToFunctionCall(c)(c.WeakTypeTag(fieldType))}
-                                             |""".stripMargin
-                                         else
-                                             s"""jstengel.ezxml.extension.ct.CtDecoder.obj[$fieldTypeAsString](
-                                                |    elem.child
-                                                |        .collectFirst{
-                                                |            case c: scala.xml.Elem if c.prefix == "$fName" => c
-                                                |        }
-                                                |        .get)${if(isRepeated) ":_*" else ""}""".stripMargin
-                                     
-                                     if ( index < lastIndex )
-                                         s"$quote$fieldAsQuote, "
-                                     else
-                                         s"$quote$fieldAsQuote)"
-                        }
+                val elem = TermName("elem")
+                val loadedParamLists = paramLists.map{ paramList =>
+                    val loadedFields = paramList.map{ field =>
+                        val fName = field.name.encodedName.toString
+                        val (tpe, _, isRepeated) =
+                            getActualFieldType(c)(field.typeSignature, typeMap, createStringRepresentation(_)())
+                        if(isSimple(c)(tpe)) {
+                            if (tpe <:< typeOf[String])
+                                q"""$elem.attributes.collectFirst{
+                                        case scala.xml.PrefixedAttribute(_, $fName, scala.xml.Text(value), _) =>
+                                            value
+                                    }.get"""
+                            else
+                                q"""$elem.attributes.collectFirst{
+                                       case scala.xml.PrefixedAttribute(_, $fName, scala.xml.Text(value), _) =>
+                                           value
+                                     }.get.${tagToFunctionCall(c)(c.WeakTypeTag(tpe))}"""
+                        } else if (isRepeated) {
+                            q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
+                                    $elem.child
+                                         .collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }
+                                         .get):_*"""
+                        } else
+                              q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
+                                    $elem.child
+                                         .collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }
+                                         .get)"""
                     }
-                    .foldLeft(s"(elem: scala.xml.Elem) => new ${aType.typeSymbol.fullName}"){
-                        case (quote : String, listAsQuote : String) => s"$quote$listAsQuote"
-                    }
-                c.Expr[Elem => A](c.parse(treeAsString))
+                    loadedFields
+                }
+                c.Expr[Elem => A](q"""($elem: scala.xml.Elem) => new $aType(...$loadedParamLists)""")
             }
         }
     }

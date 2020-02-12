@@ -8,15 +8,16 @@ import internal.typeRef
 
 
 /**
- *
+ * This tree corresponds to a type with type parameters.
+ * todo description
  * @param parentType
  * @param typeParams
  */
 private class StringTypeTree (parentType : String, val typeParams : List[StringTypeTree]) {
     /**
-     *
+     * this function converts the complete tree with it's type parameters to an actual Type
      * @param rm runtime mirror of the current universe. This is given implicitly to reduce boilerplate
-     * @return
+     * @return The Type that corresponds to the complete [[StringTypeTree]]
      */
     def toType (implicit rm : Mirror) : Type =
         if ( typeParams.isEmpty )
@@ -30,7 +31,7 @@ private class StringTypeTree (parentType : String, val typeParams : List[StringT
 private[extension] object StringTypeTree {
     
     /**
-     *
+     * todo description
      * @param s
      * @return
      */
@@ -68,9 +69,10 @@ private[extension] object StringTypeTree {
     
     /**
      * loads a class statically without type params
-     * @param className
-     * @param rm
-     * @return
+     * @param className the name of the class that will be loaded.
+     *                  This name is without any brackets or type parameters - just the fullName
+     * @param rm the runtime mirror
+     * @return the type corresponding to the given class name
      */
     private def loadTypeFromClassName (className : String)(implicit rm : Mirror) : Type =
         try

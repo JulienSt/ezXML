@@ -1,11 +1,11 @@
 package jstengel.ezxml.extension.ct
 
-import SimpleAnnotations.isValid
+import jstengel.ezxml.extension.ct.SimpleAnnotations.isValid
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
 import scala.reflect.api.Trees
-import scala.reflect.macros.whitebox.Context
+import scala.reflect.macros.whitebox
 
 // https://github.com/norcane/reminder/blob/master/src/main/scala/com/norcane/reminder.scala
 // https://stackoverflow.com/questions/21032869/create-or-extend-a-companion-object-using-a-macro-annotation-on-the-class
@@ -16,12 +16,12 @@ class Xml extends StaticAnnotation {
 }
 
 object XMLMacro {
-    def impl (c : Context)(annottees : c.Expr[Any]*): c.Expr[Any] = {
+    def impl (c : whitebox.Context)(annottees : c.Expr[Any]*): c.Expr[Any] = {
         import c.universe._
         
         val resultAsTree = annottees map ( _.tree ) match {
-            case all @ q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns }
-                     with ..$parents { $self => ..$stats } """ :: tail =>
+            case q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents
+                     { $self => ..$stats } """ :: tail =>
                 
                 if (tparams.asInstanceOf[List[Tree]].nonEmpty)
                     c.abort(c.enclosingPosition,
