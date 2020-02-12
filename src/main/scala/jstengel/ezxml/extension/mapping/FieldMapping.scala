@@ -1,4 +1,4 @@
-package indv.jstengel.ezxml.extension.mapping
+package jstengel.ezxml.extension.mapping
 
 import NotNothingObject.NotNothing
 

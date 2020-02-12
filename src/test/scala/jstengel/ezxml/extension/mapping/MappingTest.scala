@@ -1,9 +1,9 @@
-package indv.jstengel.ezxml.extension.mapping
+package jstengel.ezxml.extension.mapping
 
-
-import indv.jstengel.ezxml.extension.ct.CtEncoder
-import indv.jstengel.ezxml.extension.rt.{RtEncoder, RtDecoder}
+import jstengel.ezxml.extension.rt.{RtDecoder, RtEncoder}
 import jstengel.ezxml.core.SimpleWrapper.NodeWrapper
+import jstengel.ezxml.extension.ct.CtEncoder
+import jstengel.ezxml.extension.rt.{RtDecoder, RtEncoder}
 
 import scala.xml.{Elem, Text, UnprefixedAttribute}
 

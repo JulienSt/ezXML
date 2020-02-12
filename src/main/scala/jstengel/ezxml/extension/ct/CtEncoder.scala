@@ -1,9 +1,9 @@
-package indv.jstengel.ezxml.extension.ct
+package jstengel.ezxml.extension.ct
 
-
-import indv.jstengel.ezxml.extension.XmlClassTrait
-import indv.jstengel.ezxml.extension.ct.CompileTimeReflectHelper._
-import indv.jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
+import jstengel.ezxml.extension.XmlClassTrait
+import jstengel.ezxml.extension.ct.CompileTimeReflectHelper._
+import jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
+import jstengel.ezxml.extension.XmlClassTrait
 
 import scala.language.experimental.macros
 import scala.language.higherKinds
@@ -18,8 +18,8 @@ object CtEncoder {
     def xml[A](a: A): Elem = macro xmlImpl[A]
     
     def xmlImpl[A](c: blackbox.Context)(a: c.Expr[A])(implicit ATag : c.WeakTypeTag[A]) : c.Expr[Elem] = {
-        import c.universe._
-        c.Expr[Elem](q"indv.jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[${ATag.tpe}]($a)")
+        import c.universe.Quasiquote
+        c.Expr[Elem](q"jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[${ATag.tpe}]($a)")
     }
     
     /**
@@ -119,7 +119,9 @@ object CtEncoder {
     def convertClassToXML[A] (c : blackbox.Context)
                              (mappings  : Option[c.Expr[FieldMappings]],
                               fieldName : Option[c.Expr[String]])
-                             (implicit ATag : c.WeakTypeTag[A]) : c.Expr[A => Elem] = { import c.universe._
+                             (implicit ATag : c.WeakTypeTag[A]) : c.Expr[A => Elem] = {
+        
+        import c.universe.{Type, typeOf, TermName, Quasiquote, Symbol, Tree, TypeName}
         
         /**
          * creates a string representation for a given type, such that it can be loaded through RtDecoder.load,
@@ -143,10 +145,12 @@ object CtEncoder {
         val fullTypeName               = createStringRepresentation(aType)(typeParams)
         val isCalledFromEnclosingClass = isMacroCalledFromEnclosingClass(c)(aType)
         
+        println(aType)
         
-        if (!isCalledFromEnclosingClass && aType <:< typeOf[XmlClassTrait])
+        if (!isCalledFromEnclosingClass && aType <:< typeOf[XmlClassTrait]) {
+            println(1)
             c.Expr[A => Elem](q"""(objectToBeEncoded: $aType) => objectToBeEncoded.${TermName("saveAsXml")}""")
-
+        }
         else if (isSimple(c)(aType))
             c.Expr[A => Elem](q""" (objectToBeEncoded: $aType) =>
                 scala.xml.Elem(${fieldName.getOrElse(c.Expr[String](q"null"))},
@@ -158,22 +162,24 @@ object CtEncoder {
                 scala.xml.Attribute("value", scala.xml.Text(objectToBeEncoded.toString()), scala.xml.Null)
             """)
             
-        else if (aType <:< typeOf[Array[_]])
+        else if (aType <:< typeOf[Array[_]]) {
+            println(2)
             c.Expr[A => Elem](q""" (objectToBeEncoded: $aType) =>
                 scala.xml.Elem(${fieldName.getOrElse(c.Expr[String](q"null"))},
                                $fullTypeName,
                                scala.xml.Null,
                                scala.xml.TopScope,
                                false,
-                               objectToBeEncoded.map(e => indv.jstengel
+                               objectToBeEncoded.map(e => jstengel
                                                               .ezxml
                                                               .extension
                                                               .ct
                                                               .CtEncoder
                                                               .xmlMacro[..$typeParams](e)).toIndexedSeq: _*)
                 """) // todo include mapping
-
+        }
         else if (isConstructedThroughIterable(c)(aType, isCalledFromEnclosingClass)) {
+            println(3)
             if ( typeParams.length == 1 && ATag.tpe <:< typeParams.head )  /* prohibit StackOverflow at compile time */
                 createRuntimeConversion(c)(aType, mappings, fieldName)
             else if (typeParams.length > 1)
@@ -184,7 +190,7 @@ object CtEncoder {
                         scala.xml.TopScope,
                         false,
                         objectToBeEncoded.iterator
-                                         .map(e => indv.jstengel
+                                         .map(e => jstengel
                                                        .ezxml
                                                        .extension
                                                        .ct
@@ -199,7 +205,7 @@ object CtEncoder {
                         scala.xml.TopScope,
                         false,
                         objectToBeEncoded.iterator
-                                         .map(e => indv.jstengel
+                                         .map(e => jstengel
                                                        .ezxml
                                                        .extension
                                                        .ct
@@ -209,11 +215,13 @@ object CtEncoder {
             // todo todo include mapping
         }
         
-        else if (aType.typeSymbol.isAbstract || mappings.nonEmpty) // todo check if an empty mapping is a reasonable test
+        else if (aType.typeSymbol.isAbstract || mappings.nonEmpty) {// todo check if an empty mapping is a reasonable test
+            println(4)
             createRuntimeConversion(c)(aType, mappings, fieldName)
-        
+        }
         else
             c.Expr[A => Elem]({
+                println(5)
                 val (constructor, typeMap, classTypeParams) = getConstructorWithTypeMap(c)(aType, typeParams)
                 val fullTypeName            = createStringRepresentation(aType)(classTypeParams)
                 val elemAsString            = constructor
@@ -243,7 +251,7 @@ object CtEncoder {
                         
                         // todo if fieldmapping is not empty, do a runtime conversion
 //                         val substituteField = mappings.getOrElse(c.Expr[FieldMappings](
-//                            q"indv.jstengel.ezxml.extension.mapping.FieldMappings()"
+//                            q"jstengel.ezxml.extension.mapping.FieldMappings()"
 //                        ))
                         
                         val fieldCall =
@@ -262,7 +270,7 @@ object CtEncoder {
 //                                              "As an alternative")
 //                                )
 //                        else if(tempFieldType.typeSymbol.isAbstract)
-//                            q"""indv.jstengel.ezxml.extension.rt.RtEncoder.convertToXML(
+//                            q"""jstengel.ezxml.extension.rt.RtEncoder.convertToXML(
 //                                    $fieldCall,
 //                                    ${ mappings.getOrElse(c.Expr[FieldMappings](q"Seq()")) },
 //                                    ${ fName.toString })
@@ -277,12 +285,13 @@ object CtEncoder {
                         else if (fieldType.typeSymbol.isAbstract && fieldType.baseClasses.length <= 1)
                             q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
                                 scala.xml.Elem(prefix, label, attribs, scope, false, child ++
-                                indv.jstengel.ezxml.extension.ct
-                                .CtEncoder.xmlMacroAsField[${TypeName(fieldTypeAsString)}](${fName.toString})($fieldCall): _*)"""
+                                jstengel.ezxml.extension.ct.CtEncoder.xmlMacroAsField[${
+                                    TypeName(fieldTypeAsString)
+                                }](${fName.toString})($fieldCall): _*)"""
                         else
                             q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
                                 scala.xml.Elem(prefix, label, attribs, scope, false, child ++
-                                indv.jstengel.ezxml.extension.ct
+                                jstengel.ezxml.extension.ct
                                 .CtEncoder.xmlMacroAsField[$fieldType](${fName.toString})($fieldCall): _*)"""
                     }
                 q"(objectToBeEncoded: $aType) => $elemAsString"
@@ -304,7 +313,7 @@ object CtEncoder {
                                     mappings  : Option[c.Expr[FieldMappings]],
                                     fieldName : Option[c.Expr[String]])
                                    (implicit ATag: c.WeakTypeTag[A]): c.Expr[A => Elem] = { import c.universe._
-        c.Expr[A => Elem](q""" (objectToBeEncoded: $tpe) => indv.jstengel.ezxml.extension.rt.RtEncoder.convertToXML(
+        c.Expr[A => Elem](q""" (objectToBeEncoded: $tpe) => jstengel.ezxml.extension.rt.RtEncoder.convertToXML(
             objectToBeEncoded,
             ${mappings.getOrElse(c.Expr[FieldMappings](q"Seq()"))},
             ${fieldName.getOrElse(c.Expr[String](q"null"))}

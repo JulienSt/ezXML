@@ -1,25 +1,13 @@
-package indv.jstengel.ezxml.extension.rt
-
+package jstengel.ezxml.extension.rt
 
 import scala.language.reflectiveCalls
 import scala.reflect.ClassTag
 import scala.xml.{Attribute, Elem, Null, Text, TopScope}
 import jstengel.ezxml.core.SimpleWrapper.ElemWrapper
-import RuntimeReflectHelper.{
-    NullFlag,
-    arrayType,
-    asArrayType,
-    classTagOf,
-    createStringRepresentation,
-    getType,
-    getTypeFromString,
-    getTypeParams,
-    isConstructorMissing,
-    isSimpleType,
-    iterableType,
-    tagOf}
-import indv.jstengel.ezxml.extension.XmlClassTrait
-import indv.jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
+import RuntimeReflectHelper.{NullFlag, arrayType, asArrayType, classTagOf, createStringRepresentation, getType, getTypeFromString, getTypeParams, isConstructorMissing, isSimpleType, iterableType, tagOf}
+import jstengel.ezxml.extension.XmlClassTrait
+import jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
+import jstengel.ezxml.extension.XmlClassTrait
 
 
 // https://medium.com/@sinisalouc/overcoming-type-erasure-in-scala-8f2422070d20
@@ -134,7 +122,7 @@ object RtEncoder {
                                                           "\nMake sure every Field you want to access " +
                                                           "is actually publicly accessible.\n" +
                                                           "If You don't want to change the privacy of a field,\n" +
-                                                          "look into indv.jstengel.ezxml.extension" +
+                                                          "look into jstengel.ezxml.extension" +
                                                           ".mapping.FieldMapping.FieldMappings")
                                                       explanation.setStackTrace(Array.concat(
                                                           explanation.getStackTrace,

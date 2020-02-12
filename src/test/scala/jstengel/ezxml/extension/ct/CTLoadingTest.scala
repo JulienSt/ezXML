@@ -1,12 +1,15 @@
-package indv.jstengel.ezxml.extension.ct
+package jstengel.ezxml.extension.ct
 
 import CtDecoder.obj
-import CtEncoder.{xmlMacro, xml}
-import indv.jstengel.ezxml.extension.AnnotatedExampleClasses.AnnotatedStrangeIterator
-import indv.jstengel.ezxml.extension.AnnotatedExampleClasses.{AnnotatedIntList, AnnotatedStrangeIterator, EmptyIntSet, IntSet, NonEmpty}
-import indv.jstengel.ezxml.extension.ExampleClasses
-import indv.jstengel.ezxml.extension.ExampleClasses._
-import indv.jstengel.ezxml.extension.RTWrappers.{ElemWrapper, ObjWrapper}
+import CtEncoder.{xml, xmlMacro}
+import jstengel.ezxml.extension.AnnotatedExampleClasses.AnnotatedStrangeIterator
+import jstengel.ezxml.extension.AnnotatedExampleClasses.{AnnotatedIntList, AnnotatedStrangeIterator, EmptyIntSet, IntSet, NonEmpty}
+import jstengel.ezxml.extension.ExampleClasses
+import jstengel.ezxml.extension.ExampleClasses._
+import jstengel.ezxml.extension.RTWrappers.{ElemWrapper, ObjWrapper}
+import jstengel.ezxml.extension.AnnotatedExampleClasses.{AnnotatedIntList, AnnotatedStrangeIterator, EmptyIntSet, IntSet}
+import jstengel.ezxml.extension.ExampleClasses
+import jstengel.ezxml.extension.ExampleClasses.{ApplyTest, CC1, CC2, CCWithMap, ClassWithArgs, ClassWithArgsAndExtra, CurriedClass, CurriedClass2, CurriedVarArgs, EmptyCaseClass, IntList, ListClass, NestedCC, NestedCC1, NestedCC2, PrivateConstructorTest, RTSpecialTypeParameterTestClass1, RTSpecialTypeParameterTestClass2, StrangeIterator, TestTrait, TypeParamTest, TypeParamTest2, ccCurriedVarArgs, ccIntList, ccNonIterIntList, nonIterIntList}
 import org.junit.runner.RunWith
 import org.scalatest.FlatSpec
 import org.scalatestplus.junit.JUnitRunner
@@ -28,14 +31,14 @@ class CTLoadingTest extends FlatSpec {
     def test[A](orig: A, f: A => Elem, g: Elem => A): Unit = {
         val elem = f(orig)
         val loaded = g(elem)
-        s"\n$orig" should s" load with $elem " in {
+        s"\n$orig" should s" load with $elem, $f, and $g" in {
             assert(orig == loaded)
         }
     }
 
     def test[A](orig: A, elem: Elem, g: Elem => A): Unit = {
         val loaded = g(elem)
-        s"\n$orig" should s" load with $elem " in {
+        s"\n$orig" should s" load with $elem and $g" in {
             assert(orig == loaded)
         }
     }
@@ -73,7 +76,7 @@ class CTLoadingTest extends FlatSpec {
     test(Map(1 -> "TestInput1", 2 -> "TestInput2"), xmlMacro[Map[Int, String]], obj[Map[Int, String]])
     test(CCWithMap(Map(2 -> CC1(5, "90ß"), 53 -> CC1(90, "965ß"))), xmlMacro[CCWithMap], obj[CCWithMap])
 
-//    test(new OptionTest(Some(34)), xmlMacro[OptionTest], obj[OptionTest])
+    test(new OptionTest(Some(34)), xmlMacro[OptionTest], obj[OptionTest])
     test(new ListClass(List(3, 4, 5, 6)), xmlMacro[ListClass], obj[ListClass])
     test(TypeParamTest(234), xmlMacro[TypeParamTest[Int]], obj[TypeParamTest[Int]])
     test(TypeParamTest2(234, "TestInput", List(1, 2, 3)),
@@ -86,19 +89,20 @@ class CTLoadingTest extends FlatSpec {
     val runtTimeList: List[TestTrait] = List(applyTest, nct)
     test(runtTimeList, xmlMacro[List[TestTrait]], obj[List[TestTrait]])
 
-//    private val bufferTest = mutable.Buffer(2, 3, 4)
-//    test(bufferTest, xmlMacro[mutable.Buffer[Int]], obj[mutable.Buffer[Int]])
+    private val bufferTest = mutable.Buffer(2, 3, 4)
+    test(bufferTest, xmlMacro[mutable.Buffer[Int]], obj[mutable.ArrayBuffer[Int]])
+    // note: for some reason obj[mutable.Buffer[Int]] does not work (it doesn't even compile)
 
     testArray(Array("heyhey", "blabla"), xmlMacro[Array[String]], obj[Array[String]])
     testArray(Array(2, 3, 4), xmlMacro[Array[Int]], obj[Array[Int]])
-//    val n: Option[Int] = None
-//    test(n, xmlMacro[Option[Int]], obj[Option[Int]])
-//    val someTest: Option[Int] = Some(4)
-//    test(someTest, xmlMacro[Option[Int]], obj[Option[Int]])
-//    test(Some(3, "5"): Option[(Int, String)], xmlMacro[Option[(Int, String)]], obj[Option[(Int, String)]])
+    val n: Option[Int] = None
+    test(n, xmlMacro[Option[Int]], obj[Option[Int]])
+    val someTest: Option[Int] = Some(4)
+    test(someTest, xmlMacro[Option[Int]], obj[Option[Int]])
+    test(Some(3, "5"): Option[(Int, String)], xmlMacro[Option[(Int, String)]], obj[Option[(Int, String)]])
     test(Tuple1(3), xmlMacro[Tuple1[Int]], obj[Tuple1[Int]])
     test(Tuple1(applyTest), xmlMacro[Tuple1[TestTrait]], obj[Tuple1[TestTrait]])
-//    test(Some(3): Option[Int], xmlMacro[Option[Int]], obj[Option[Int]])
+    test(Some(3): Option[Int], xmlMacro[Option[Int]], obj[Option[Int]])
 
     val tree = new NonEmpty(4,
                             new NonEmpty(6,

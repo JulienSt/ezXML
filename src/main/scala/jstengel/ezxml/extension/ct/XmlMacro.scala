@@ -1,6 +1,6 @@
-package indv.jstengel.ezxml.extension.ct
+package jstengel.ezxml.extension.ct
 
-import indv.jstengel.ezxml.extension.ct.SimpleAnnotations.isValid
+import SimpleAnnotations.isValid
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
@@ -36,7 +36,7 @@ object XMLMacro {
                 val newParents = if (parentList.exists(_.toString.contains("XmlClassTrait")))
                                      parentList
                                  else
-                                     parentList ::: List(tq"indv.jstengel.ezxml.extension.XmlClassTrait")
+                                     parentList ::: List(tq"jstengel.ezxml.extension.XmlClassTrait")
                 
                 
                 /* retrieve all the fields outside the constructor with annotations */
@@ -68,7 +68,7 @@ object XMLMacro {
                             Some(fieldName -> annotations)
                             val newTerm      = TermName(s"__${ fieldName.toString }Cache")
                             val xmlExpansion =
-                                q"""indv.jstengel.ezxml.extension.ct.CtEncoder.xml($fieldName,
+                                q"""jstengel.ezxml.extension.ct.CtEncoder.xml($fieldName,
                                                                                      ${fieldName.toString})"""
                 
                             val newDefinitions =
@@ -93,23 +93,23 @@ object XMLMacro {
                         val newParents = if (parentList.exists(_.toString.contains("XmlObjectTrait")))
                                              parentList
                                          else
-                                             parentList ::: List(tq"indv.jstengel.ezxml.extension.XmlObjectTrait")
+                                             parentList ::: List(tq"jstengel.ezxml.extension.XmlObjectTrait")
                         q"""$mods object $tname extends { ..$earlydefns } with ..$newParents { $self =>
                                 override def loadFromXML(elem: scala.xml.Elem) : $tpname[..$tparams] =
-                                    indv.jstengel.ezxml.extension.ct.CtDecoder.obj[$tpname[..$tparams]](elem)
+                                    jstengel.ezxml.extension.ct.CtDecoder.obj[$tpname[..$tparams]](elem)
                             ..$body
                             }"""
                     case _ =>
-                        q"""object ${TermName(tpname.toString)} extends indv.jstengel.ezxml.extension.XmlObjectTrait {
+                        q"""object ${TermName(tpname.toString)} extends jstengel.ezxml.extension.XmlObjectTrait {
                                 override def loadFromXML(elem: scala.xml.Elem) : $tpname[..$tparams] =
-                                    indv.jstengel.ezxml.extension.ct.CtDecoder.obj[$tpname[..$tparams]](elem)
+                                    jstengel.ezxml.extension.ct.CtDecoder.obj[$tpname[..$tparams]](elem)
                             }"""
                 }
                 
                 q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with
                     ..$newParents { $self =>
                         override def saveAsXml: scala.xml.Elem =
-                            indv.jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[$tpname[..$tparams]](this)
+                            jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[$tpname[..$tparams]](this)
                         ..${newStats.flatMap(_._1)}
                     }
                     ..$newTail"""

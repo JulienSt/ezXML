@@ -1,8 +1,8 @@
-package indv.jstengel.ezxml.extension.rt
-
+package jstengel.ezxml.extension.rt
 
 import RuntimeReflectHelper.{NullFlag, arrayType, asArrayType, classTagOf, companionMethodExtraction, getTypeFromString, getTypeParams, isConstructorMissing, isSimpleType, iterableType, minimumBaseClasses, productType, stringToSimpleValue, tagOf}
-import indv.jstengel.ezxml.extension.XmlObjectTrait
+import jstengel.ezxml.extension.XmlObjectTrait
+import jstengel.ezxml.extension.XmlObjectTrait
 
 import scala.reflect.ClassTag
 import scala.xml.{Elem, PrefixedAttribute, Text}

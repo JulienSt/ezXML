@@ -1,5 +1,4 @@
-package indv.jstengel.ezxml.extension.ct
-
+package jstengel.ezxml.extension.ct
 
 import scala.reflect.macros.blackbox
 
@@ -9,7 +8,7 @@ private[ct] object CompileTimeReflectHelper {
     /**
      * a type is considered simple (in this library at least), when it is a sub type of AnyVal, Number, or String
      * and a value of that type can therefor easily be extracted from a String
-     * (mirrors indv.jstengel.ezxml.extension.rt.RuntimeReflectHelper.isSimple)
+     * (mirrors jstengel.ezxml.extension.rt.RuntimeReflectHelper.isSimple)
      * @param c context, to access types and symbols, during compile time
      * @param t the type that will be checked
      * @return true, if the type is a sub type of AnyVal, Number, or String. false if that is not the case
@@ -62,9 +61,11 @@ private[ct] object CompileTimeReflectHelper {
      * @return true, if tpe is only constructed as an iterable
      */
     def isConstructedThroughIterable(c : blackbox.Context)(tpe: c.Type, isCalledFromAnnotation: Boolean): Boolean =
-        tpe <:< c.weakTypeOf[IterableOnce[_]] &&
-        !isCalledFromAnnotation &&
-        (isConstructorMissing(c)(tpe) || tpe.typeSymbol.isAbstract)
+        tpe.typeSymbol.fullName.startsWith("scala.collection") || (
+            tpe <:< c.weakTypeOf[IterableOnce[_]] &&
+            !(tpe <:< c.weakTypeOf[Product]) &&
+            !isCalledFromAnnotation &&
+            (isConstructorMissing(c)(tpe) || tpe.typeSymbol.isAbstract) )
     
     
     /**
