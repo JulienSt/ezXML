@@ -27,7 +27,7 @@ object AnnotatedExampleClasses {
 //                d == other.d1
 //        }
 //        override def toString : String = s"AnnotatedTypeParameterTestClass1($a, $b, $c, $d)"
-//        override def saveAsXml : Elem = CtEncoder.xmlMacro[AnnotatedTypeParameterTestClass1[T1, T2, T3]](this)
+//        override def encode : Elem = CtEncoder.xmlMacro[AnnotatedTypeParameterTestClass1[T1, T2, T3]](this)
 //    }
 //
 //    class CTSpecialTypeParameterTestClass2[T1, T2](a: T2, b: T1, c: T1*) {

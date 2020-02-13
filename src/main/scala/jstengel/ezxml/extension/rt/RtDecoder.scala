@@ -50,7 +50,7 @@ object RtDecoder {
         if(companion.typeSignature <:< loadableType)
             companion.typeSignature
                      .members
-                     .collectFirst(companionMethodExtraction(companion, "loadFromXML"))
+                     .collectFirst(companionMethodExtraction(companion, "decode"))
                      .get(elem)
 
         else if ( loadedSymbol.isModuleClass )

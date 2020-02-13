@@ -146,8 +146,8 @@ object CtEncoder {
         /**
          * creates a string representation for a given type, such that it can be loaded through RtDecoder.load,
          * CtDecoder.obj, or getTypeFromString
-         * Sadly, this needs to be a nested function and can not be generalize, due to compiler problems
-         *
+         * Sadly, this needs to be a nested function and can not be generalized, due to compiler problems,
+         * therefor this function is duplicated in CtDecoder
          * @param t the type that will be converted to a string
          * @return a String representation for type t in the for of t[typeParams]
          */
@@ -167,7 +167,7 @@ object CtEncoder {
         val isCalledFromEnclosingClass = isMacroCalledFromEnclosingClass(c)(aType)
         
         if (!isCalledFromEnclosingClass && aType <:< typeOf[XmlClassTrait])
-            c.Expr[A => Elem](q"""(objectToBeEncoded: $aType) => objectToBeEncoded.${TermName("saveAsXml")}""")
+            c.Expr[A => Elem](q"""(objectToBeEncoded: $aType) => objectToBeEncoded.${TermName("encode")}""")
             
         else if (isSimple(c)(aType))
             c.Expr[A => Elem](q""" (objectToBeEncoded: $aType) =>
@@ -206,7 +206,8 @@ object CtEncoder {
                          fieldName,
                          createStringRepresentation(_)(),
                          aType,
-                         isCalledFromEnclosingClass)
+                         isCalledFromEnclosingClass,
+                         mappings)
         }
     }
     
@@ -230,13 +231,14 @@ object CtEncoder {
                                 fullTypeName               : String,
                                 typeMap                    : Map[c.Type, c.Type],
                                 fieldName                  : Option[c.Expr[String]],
-                                createStringRepresentation : c.Type =>String,
+                                createStringRepresentation : c.Type => String,
                                 aType                      : c.Type,
-                                isCalledFromEnclosingClass : Boolean) = {
+                                isCalledFromEnclosingClass : Boolean,
+                                mappings                   : Option[c.Expr[FieldMappings]]) = {
         import c.universe.{Quasiquote, Symbol, TermName, Tree, TypeName}
         c.Expr[A => Elem]({
             
-            val elemAsString = constructor
+            val elemAsTree = constructor
                 .paramLists
                 .flatten
                 .foldLeft(q"""scala.xml.Elem(${ fieldName.getOrElse(c.Expr[String](q"null")) },
@@ -245,28 +247,16 @@ object CtEncoder {
                                              scala.xml.TopScope,
                                              true,
                                              Seq(): _*)"""){ case (quote : Tree, field : Symbol) =>
-                    val fName                             = TermName(field.name.decodedName.toString)
-                    val (fieldType, fieldTypeAsString, _) =
-                        getActualFieldType(c)(field.typeSignature, typeMap, createStringRepresentation(_))
-                    
-                    // todo annotations
-                    // todo check which annotations can be used together
-                    // pattern matching through all annotations, since they can be combined
-//                        val annotations = field.annotations.flatMap(_.tree match {
-//                            case q"new $tpname($param)" if isValid(tpname.toString()) => Some
-//                            (tpname, Some(param))
-//                            case q"new $tpname"         if isValid(tpname.toString()) => Some
-//                            (tpname, None)
-//                            case _ => None
-//                        })
-//                        println("---------------------- Annotations ----------------------")
-//                        annotations.foreach(println)
-//                        println("^^^^^^^^^^^^^^^^^^^^^^ Annotations ^^^^^^^^^^^^^^^^^^^^^^")
+                    val (fName, fieldType, fieldTypeAsString, _, shouldBeEncodedAtRuntime) =
+                        getFieldInfo(c)(field, typeMap, createStringRepresentation(_))
                     
                     val fieldCall = if ( isCalledFromEnclosingClass )
-                                        q"$fName" // todo check if field is annotated with substitution
+                                        q"${TermName(fName)}" // todo check if field is annotated with substitution
                                     else
-                                        q"${ TermName("objectToBeEncoded") }.$fName"
+                                        q"${ TermName("objectToBeEncoded") }.${TermName(fName)}"
+                    
+                    if (shouldBeEncodedAtRuntime)
+                        createRuntimeConversion(c)(aType, mappings, fieldName)
                     
                     if ( isSimple(c)(fieldType) )
                         q"""$quote % scala.xml.Attribute($fieldTypeAsString,
@@ -286,7 +276,9 @@ object CtEncoder {
                             fName.toString
                         })($fieldCall): _*)"""
                 }
-            q"(objectToBeEncoded: $aType) => $elemAsString"
+//            aType.decls.collect{case member if member.annotations.exists()}
+            // todo if called from enclosing class, collect all elems which are annotated with CacheXML
+            q"(objectToBeEncoded: $aType) => $elemAsTree"
         })
     }
     

@@ -7,12 +7,12 @@ import scala.xml.Elem
  * todo description
  */
 trait XmlClassTrait {
-    def saveAsXml: Elem
+    def encode: Elem
 }
 
 /**
- * todo description
+ * This trait signals the DeCoders and
  */
 trait XmlObjectTrait {
-    def loadFromXML(elem: Elem): XmlClassTrait
+    def decode(elem: Elem): XmlClassTrait
 }

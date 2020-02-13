@@ -1,22 +1,24 @@
 package jstengel.ezxml.extension.ct
 
+import jstengel.ezxml.extension.XmlClassTrait
 
-abstract class Bla {
+
+abstract class BaseClass {
     def a: String
 }
 
-@Xml
-class CompleteAnnotationExample (@AsTextXML val s                        : String,
-                                 @RuntimeXML val b                       : Bla,
-                                 @SubstituteFieldXML("c") @RuntimeXML c1 : Int) {
+case class ChildClass(a: String) extends BaseClass
+
+@Xml class CompleteAnnotationExample (val s             : String,
+                                      @RuntimeXML val b : BaseClass,
+                                      c1                : Int) {
 
     val c: Int = c1*2
 
-    @CacheXML @SubstituteFieldXML("c") private val someHardCalculation = 5
-
-    @RuntimeXML private lazy val privateStuff = 99
-    @RuntimeXML lazy val publicStuff = 99
-    @RuntimeXML private[this] lazy val extremelyPrivateStuff = 99
+    @CacheXML private val someHardCalculation = {
+        println("calculated")
+        5
+    }
 
     /*
     private[FinalExample] var _someHardCalculationCache: Option[T] = None
@@ -40,13 +42,10 @@ object CompleteAnnotationExample {
 
 object ExampleTest extends App {
 
-    val fe = new CompleteAnnotationExample("miep", new Bla {
-        override def a : String = "Bla-output"
-    }, 1414)
+    val fe = new CompleteAnnotationExample("miep", ChildClass("ImplementedClass-output"), 1414)
+    println(fe.asInstanceOf[XmlClassTrait].encode)
 
     println("''''''''''")
-//    println(fe.xml.toPrettyXMLString)
-    println(fe.publicStuff)
     println(CompleteAnnotationExample.get(fe))
     println("''''''''''")
 

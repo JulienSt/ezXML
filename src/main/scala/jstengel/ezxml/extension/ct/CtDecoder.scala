@@ -1,14 +1,8 @@
 package jstengel.ezxml.extension.ct
 
 import jstengel.ezxml.extension.XmlObjectTrait
-import jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{
-    getTypeParams,
-    isObject,
-    isSimple,
-    isConstructedThroughIterable,
-    getConstructorWithTypeMap,
-    getActualFieldType
-}
+import jstengel.ezxml.extension.ct.CompileTimeReflectHelper._
+
 import scala.collection.mutable
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
@@ -49,11 +43,12 @@ object CtDecoder {
     def objImpl[A](c : blackbox.Context)(implicit ATag: c.WeakTypeTag[A]): c.Expr[Elem => A] = {
     
         import c.universe.{MethodSymbol, Quasiquote, TermName, Type, TypeRef, typeOf}
+        import c.{Expr, WeakTypeTag}
         
         /**
          * creates a string representation for a given type, such that it can be loaded through RtDecoder.load,
          * CtDecoder.obj, or getTypeFromString
-         * Sadly, this needs to be a nested function and can not be generalize, due to compiler problems,
+         * Sadly, this needs to be a nested function and can not be generalized, due to compiler problems,
          * therefor this function is duplicated in CtEncoder
          * @param t the type that will be converted to a string
          * @return a String representation for type t in the for of t[typeParams]
@@ -78,88 +73,84 @@ object CtDecoder {
          * from the companion object. */
         
         if (!isCalledFromCompanion && companionSig <:< typeOf[XmlObjectTrait])
-            c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => $companion.${TermName("loadFromXML")}(elem)""")
+            Expr[Elem => A](q"""(elem: scala.xml.Elem) => $companion.${TermName("decode")}(elem)""")
             
         else if (aTypeSymbol.isModuleClass)
-            c.Expr[Elem => A]( q"""(elem: scala.xml.Elem) =>
+            Expr[Elem => A]( q"""(elem: scala.xml.Elem) =>
                     ${aTypeSymbol.owner.typeSignature.member(aTypeSymbol.name.toTermName)}""")
         
         else if(isObject(c)(aType, companionSig))
-            c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => $companion""")
+            Expr[Elem => A](q"""(elem: scala.xml.Elem) => $companion""")
         
         else if (isSimple(c)(aType))
             if (aType <:< typeOf[String])
-                c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => (elem \@ "value")""")
+                Expr[Elem => A](q"""(elem: scala.xml.Elem) => (elem \@ "value")""")
             else
-                c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => (elem \@ "value")${ tagToFunctionCall(c)(ATag) }""")
+                Expr[Elem => A](q"""(elem: scala.xml.Elem) => (elem \@ "value")${ tagToFunctionCall(c)(ATag) }""")
         
-        else if ( aType <:< typeOf[Array[_]] || isConstructedThroughIterable(c)(aType, isCalledFromCompanion) ) {
-            val tparam = aType match {
-                case TypeRef(_, _, tparam::Nil) => tq"$tparam"
-                case TypeRef(_, _, tps)         => tq"(..$tps)"
-            }
-            val companionMembers = companionSig.members
-            val tree = companionMembers
-                .collectFirst{
-                    case m : MethodSymbol if {val name = m.name.toString; name == "from" || name == "fromSeq"} =>
-                        q"""(elem: scala.xml.Elem) => {$m( elem.child.map{case (e: scala.xml.Elem) =>
-                            jstengel.ezxml.extension.ct.CtDecoder.obj[$tparam](e)}).asInstanceOf[$aType]}"""
+        else if ( aType <:< typeOf[Array[_]] || isConstructedThroughIterable(c)(aType, isCalledFromCompanion) )
+            Expr[Elem => A]({
+                val tparam = aType match {
+                    case TypeRef(_, _, tparam::Nil) => tq"$tparam"
+                    case TypeRef(_, _, tps)         => tq"(..$tps)"
                 }
-                .getOrElse{
-                    companionMembers.collectFirst{case apply : MethodSymbol if apply.name.toString == "apply" =>
-                        q"""(elem: scala.xml.Elem) => $apply( elem.child.map{case (e: scala.xml.Elem) =>
-                            jstengel.ezxml.extension.ct.CtDecoder.obj[$tparam](e)}: _*)"""
-                    }.get
-                }
-            c.Expr[Elem => A](tree)
-        }
+                val companionMembers = companionSig.members
+                companionMembers
+                    .collectFirst{
+                        case m : MethodSymbol if {val name = m.name.toString; name == "from" || name == "fromSeq"} =>
+                            q"""(elem: scala.xml.Elem) => {$m( elem.child.map{case (e: scala.xml.Elem) =>
+                                jstengel.ezxml.extension.ct.CtDecoder.obj[$tparam](e)}).asInstanceOf[$aType]}"""
+                    }
+                    .getOrElse{
+                        companionMembers.collectFirst{case apply : MethodSymbol if apply.name.toString == "apply" =>
+                            q"""(elem: scala.xml.Elem) => $apply( elem.child.map{case (e: scala.xml.Elem) =>
+                                jstengel.ezxml.extension.ct.CtDecoder.obj[$tparam](e)}: _*)"""
+                        }.get
+                    }
+            })
 
         else if (aType.typeSymbol.isAbstract)
-            c.Expr[Elem => A](q"""(e: scala.xml.Elem) => jstengel.ezxml.extension.rt.RtDecoder.load[$aType](e)""")
+            Expr[Elem => A](q"""(e: scala.xml.Elem) => jstengel.ezxml.extension.rt.RtDecoder.load[$aType](e)""")
         
         else {
             val (constructor, typeMap, _) = getConstructorWithTypeMap(c)(aType, typeParams)
             val paramLists = constructor.paramLists
     
             if ( paramLists.forall(_.isEmpty) )
-                c.Expr[Elem => A](q"""(elem: scala.xml.Elem) => new $aType()""")
+                Expr[Elem => A](q"""(elem: scala.xml.Elem) => new $aType()""")
 
             else if (!isCalledFromCompanion && constructor.isPrivate)
-                c.Expr[Elem => A](q"""(e: scala.xml.Elem) =>
-                    jstengel.ezxml.extension.rt.RtDecoder.load[$aType](e)""")
+                Expr[Elem => A](q"""(e: scala.xml.Elem) => jstengel.ezxml.extension.rt.RtDecoder.load[$aType](e)""")
                 
             else {
-                val elem = TermName("elem")
-                val loadedParamLists = paramLists.map{ paramList =>
-                    val loadedFields = paramList.map{ field =>
-                        val fName = field.name.encodedName.toString
-                        val (tpe, _, isRepeated) =
-                            getActualFieldType(c)(field.typeSignature, typeMap, createStringRepresentation(_)())
-                        if(isSimple(c)(tpe)) {
-                            if (tpe <:< typeOf[String])
-                                q"""$elem.attributes.collectFirst{
-                                        case scala.xml.PrefixedAttribute(_, $fName, scala.xml.Text(value), _) =>
-                                            value
-                                    }.get"""
-                            else
-                                q"""$elem.attributes.collectFirst{
-                                       case scala.xml.PrefixedAttribute(_, $fName, scala.xml.Text(value), _) =>
-                                           value
-                                     }.get.${tagToFunctionCall(c)(c.WeakTypeTag(tpe))}"""
-                        } else if (isRepeated) {
+                val elem             = TermName("elem")
+                val loadedParamLists = paramLists.map {
+                    _.map { field =>
+                        val (fName, tpe, _, isRepeated, shouldBeEncodedAtRuntime) =
+                            getFieldInfo(c)(field, typeMap, createStringRepresentation(_)())
+    
+                        if (shouldBeEncodedAtRuntime)
+                            q"""jstengel.ezxml.extension.rt.RtDecoder.load[$tpe]($elem)"""
+                        else if (shouldBeEncodedAtRuntime && isRepeated)
+                            q"""jstengel.ezxml.extension.rt.RtDecoder.load[$tpe]($elem):_*"""
+                        else if(isSimple(c)(tpe) && tpe <:< typeOf[String])
+                            q"""$elem.attributes.collectFirst {
+                                    case scala.xml.PrefixedAttribute(_, $fName, scala.xml.Text(value), _) => value
+                                }.get"""
+                        else if(isSimple(c)(tpe))
+                            q"""$elem.attributes.collectFirst {
+                                    case scala.xml.PrefixedAttribute(_, $fName, scala.xml.Text(value), _) => value
+                                }.get.${tagToFunctionCall(c)(WeakTypeTag(tpe))}"""
+                        else if (isRepeated)
                             q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
-                                    $elem.child
-                                         .collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }
-                                         .get):_*"""
-                        } else
-                              q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
-                                    $elem.child
-                                         .collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }
-                                         .get)"""
-                    }
-                    loadedFields
-                }
-                c.Expr[Elem => A](q"""($elem: scala.xml.Elem) => new $aType(...$loadedParamLists)""")
+                                    $elem.child.collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }.get
+                                ):_*"""
+                        else
+                            q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
+                                    $elem.child.collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }.get
+                                )"""
+                }}
+                Expr[Elem => A](q"""($elem: scala.xml.Elem) => new $aType(...$loadedParamLists)""")
             }
         }
     }
@@ -172,7 +163,7 @@ object CtDecoder {
      * @return a partial function that associates a WeakTypeTag with a method call from the String-class
      */
     def tagToFunctionCall[A] (c : blackbox.Context) : PartialFunction[c.WeakTypeTag[A], c.TermName] = {
-        import c.universe.{TermName, typeOf, WeakTypeTag}
+        import c.universe.{TermName, WeakTypeTag, typeOf}
         {
             case WeakTypeTag(t) if t <:< typeOf[Int]     || t <:< typeOf[java.lang.Integer]   => TermName("toInt")
             case WeakTypeTag(t) if t <:< typeOf[Double]  || t <:< typeOf[java.lang.Double]    => TermName("toDouble")

@@ -42,7 +42,7 @@ object RtEncoder {
         val className = createStringRepresentation(ttType)(typeParams)
         
         if (ttType <:< savableType) {
-            val Elem(_, l, att, s, c @ _*) = a.asInstanceOf[XmlClassTrait].saveAsXml
+            val Elem(_, l, att, s, c @ _*) = a.asInstanceOf[XmlClassTrait].encode
             Elem(pre, l, att, s, true, c: _*)
         }
         

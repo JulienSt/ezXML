@@ -70,36 +70,49 @@ private[ct] object CompileTimeReflectHelper {
     
     /**
      * because the types of the constructor params are likely to be generic, a map has to be applied to get the
-     * correct type, that can actually be loaded
+     * correct type that can actually be loaded
+     * This Function also retrieves all the other necessary information about this field
      * @param c                          context, to access types and symbols, during compile time
-     * @param fieldTypeSig               the most generic type signatures of the field
+     * @param field                      the Symbol of the field from which all the information will be extracted
      * @param typeMap                    A Map that converts between the given tparams and the generic tparams from
      *                                   the constructor
      * @param createStringRepresentation a Function that will give the most accurate string representation containing
      *                                   all the information about the resulting type
-     * @return a tuple3, that contains the actual type, a correct string representation of that type and a boolean,
-     *         that is true, if the original field type was a vararg
+     * @return a tuple5, that contains all the necessary information for the given field, in the following Order:
+     *         - The name of the field
+     *         - the actual type of the field
+     *         - a correct string representation of that type
+     *         - a boolean that is true, if the original field type was a vararg
+     *         - another boolean, that holds the is true if the field was annotated with @RuntimeXML
      */
-    def getActualFieldType(c : blackbox.Context)
-                          (fieldTypeSig: c.Type,
-                           typeMap: Map[c.Type, c.Type],
-                           createStringRepresentation: c.Type => String): (c.Type, String, Boolean) = {
-        val tempFieldType = typeMap.getOrElse(fieldTypeSig, fieldTypeSig)
-        val tempFieldTypeAsString = createStringRepresentation(tempFieldType)
-        val isRepeated = tempFieldTypeAsString.startsWith("scala.<repeated>")
-        if (isRepeated) {
-            val repeatedType = getTypeParams(c)(tempFieldType).head
+    def getFieldInfo (c : blackbox.Context)
+                     (field                      : c.Symbol,
+                      typeMap                    : Map[c.Type, c.Type],
+                      createStringRepresentation : c.Type => String): (String, c.Type, String, Boolean, Boolean) = {
+        val fieldName                = field.name.encodedName.toString
+        val fieldTypeSig             = field.typeSignature
+        val tempFieldType            = typeMap.getOrElse(fieldTypeSig, fieldTypeSig)
+        val tempFieldTypeAsString    = createStringRepresentation(tempFieldType)
+        val isRepeated               = tempFieldTypeAsString.startsWith("scala.<repeated>")
+        val shouldBeEncodedAtRuntime = field.annotations.exists(RuntimeXML.isRuntimeAnnotation(c))
+        if ( isRepeated ) {
+            val repeatedType       = getTypeParams(c)(tempFieldType).head
             val actualRepeatedType = typeMap.getOrElse(repeatedType, repeatedType)
-            val fieldTypeAsSeq = c.typeOf[Seq[Nothing]] match {
+            val fieldTypeAsSeq     = c.typeOf[Seq[Nothing]] match {
                 case c.universe.TypeRef(t, s, _) =>
                     c.internal.typeRef(t.asInstanceOf[c.universe.Type],
                                        s.asInstanceOf[c.universe.Symbol],
                                        List(actualRepeatedType))
             }
-            (fieldTypeAsSeq ,s"scala.collection.immutable.Seq[$actualRepeatedType]", isRepeated)
-        } else {
-            (tempFieldType, tempFieldTypeAsString, isRepeated)
-        }
+            (
+                fieldName,
+                fieldTypeAsSeq,
+                s"scala.collection.immutable.Seq[$actualRepeatedType]",
+                isRepeated,
+                shouldBeEncodedAtRuntime
+            )
+        } else
+            (fieldName, tempFieldType, tempFieldTypeAsString, isRepeated, shouldBeEncodedAtRuntime)
     }
     
     /**
