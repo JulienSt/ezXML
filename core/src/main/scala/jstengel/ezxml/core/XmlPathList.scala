@@ -5,8 +5,17 @@ import scala.annotation.tailrec
 import scala.xml.{Elem, Node}
 
 
+/**
+ *
+ * @param paths
+ */
 case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
-
+    
+    /**
+     *
+     * @param traversalFunction
+     * @return
+     */
     private def traverse(traversalFunction : XmlPath => OptionalPath): OptionalPath = {
         OptionalPath(paths.flatMap{ path =>
             traversalFunction(path).oPath match {
@@ -16,19 +25,45 @@ case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
             }
         }.flatten)
     }
-
+    
+    /**
+     *
+     * @param childNodeName the name of the child that is searched for
+     * @return
+     */
     override def \~ (childNodeName : String) : OptionalPath =
         traverse(_ \~ childNodeName)
-
+    
+    /**
+     *
+     * @param childNodeName
+     * @param predicate
+     * @return
+     */
     override def \~ (childNodeName: String, predicate: Elem => Boolean): OptionalPath =
         traverse(_ \~ (childNodeName, predicate))
-
+    
+    /**
+     *
+     * @param childNodeName
+     * @return
+     */
     override def \\~ (childNodeName: String): OptionalPath =
         traverse(_ \\~ childNodeName)
-
+    
+    /**
+     *
+     * @param childNodeName
+     * @param predicate
+     * @return
+     */
     override def \\~ (childNodeName: String, predicate: Elem => Boolean): OptionalPath =
         traverse(_ \\~ (childNodeName, predicate))
-
+    
+    /**
+     *
+     * @return
+     */
     override def toString : String = s"XmlPathList(\n ${paths.mkString(",\n")} \n)"
     
     /**
@@ -137,18 +172,47 @@ case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
         }
     }
     
-    
-
+    /**
+     *
+     * @param children the nodes that will be added to the children of the elems at the end of the underlying path
+     * @return the overall structure with a child added to all the elems,
+     *         that where pointed to with the underlying Path
+     */
     override def addChildren (children : Node*) : Option[Elem] = changeTargets(_.addChildren(children: _*))
-
+    
+    /**
+     *
+     * @param predicate
+     * @return
+     */
     override def deleteChildren (predicate: Node => Boolean): Option[Elem] = changeTargets(_.deleteChildren(predicate))
-
+    
+    /**
+     *
+     * @param predicate
+     * @return
+     */
     override def filterChildren (predicate: Node => Boolean): Option[Elem] = changeTargets(_.filterChildren(predicate))
-
+    
+    /**
+     *
+     * @param f
+     * @return
+     */
     override def mapChildren (f: Node => Node): Option[Elem] = changeTargets(_.mapChildren(f))
-
+    
+    /**
+     *
+     * @param f
+     * @return
+     */
     override def flatMapChildren (f: Node => Option[Node]): Option[Elem] = changeTargets(_.flatMapChildren(f))
-
+    
+    /**
+     *
+     * @param f
+     * @return
+     */
     override def transformTarget (f: Elem => Elem): Option[Elem] = changeTargets(_.transformRoot(f))
 
 }

@@ -177,9 +177,9 @@ object RtEncoder {
                                            l
                                  
                         if(fieldValue == null)
-                            elem addAttWithPre (valueTypeName, fieldNameStr, NullFlag)
+                            elem setAttWithPre (valueTypeName, fieldNameStr, NullFlag)
                         else if (isSimpleType(valueType)) {
-                            Elem(pre, newLabel, att, s, true, c:_*).addAttWithPre(valueTypeName,
+                            Elem(pre, newLabel, att, s, true, c:_*).setAttWithPre(valueTypeName,
                                                                                   fieldNameStr,
                                                                                   fieldValue.toString)
                         } else {
