@@ -1,52 +1,39 @@
 package jstengel.ezxml.extension.ct
 
+import jstengel.ezxml.core.SimpleWrapper.NodeWrapper
 import jstengel.ezxml.extension.XmlClassTrait
+import jstengel.ezxml.extension.ct.CtDecoder._
 
+class BaseClass(val a: String)
 
-abstract class BaseClass {
-    def a: String
-}
-
-case class ChildClass(a: String) extends BaseClass
+case class ChildClass(override val a : String) extends BaseClass(a)
 
 @Xml class CompleteAnnotationExample (val s             : String,
                                       @RuntimeXML val b : BaseClass,
                                       c1                : Int) {
 
-    val c: Int = c1*2
-
-    @CacheXML private val someHardCalculation = {
+    @CacheXML private[ct] val someHardCalculation: Int = {
+        // if you look at the output, you will notice that the intermediary steps are missing
+        // and only the result gets loaded
         println("calculated")
-        5
+        println("calculated2")
+        println("calculated3")
+        1
     }
+    @CacheXML val someHardCalculation2: Int = 2
 
-    /*
-    private[FinalExample] var _someHardCalculationCache: Option[T] = None
-    lazy val someHardCalculation = _someHardCalculationCache.getOrElse( das was hier vorher stand )
-     */
+    @CacheXML @RuntimeXML val baseClass: BaseClass = ChildClass("test")
 
 }
-
-object CompleteAnnotationExample {
-    def get(fe: CompleteAnnotationExample) = fe.__someHardCalculationCache
-}
-
-
-// todo also test:
-//  app.xml.SubstituteXML
-//  xml.SubstituteXML
-//  SubstituteXML
-
-
-// todo test that annotations can be used more than once
 
 object ExampleTest extends App {
 
-    val fe = new CompleteAnnotationExample("miep", ChildClass("ImplementedClass-output"), 1414)
-    println(fe.asInstanceOf[XmlClassTrait].encode)
-
-    println("''''''''''")
-    println(CompleteAnnotationExample.get(fe))
-    println("''''''''''")
+    val original = new CompleteAnnotationExample("miep", ChildClass("ImplementedClass-output"), 1414)
+    val x        = original.asInstanceOf[XmlClassTrait].encode
+    println(x.toPrettyXMLString)
+    val decoded = obj[CompleteAnnotationExample](x)
+    println(decoded.someHardCalculation)
+    println(decoded.someHardCalculation2)
+    println(decoded.baseClass)
 
 }

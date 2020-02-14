@@ -30,12 +30,26 @@ object RtEncoder {
     
     private val savableType = typeOf[XmlClassTrait]
     
-    private[extension]
-    def convertToXML[A] (a           : A,
-                         mappings    : FieldMappings = Seq(),
-                         pre         : String = null,
-                         isRecursive : Boolean = false)
-                        (implicit tt : TypeTag[A], ct : ClassTag[A]) : Elem = {
+    /**
+     * Encodes a class during runtime. This is accomplished via a lot of reflections and is therefore relatively slow
+     * (at least compared to the compile time encoding)
+     * This functions strength lies in the robustness with abstract types and generic type parameters.
+     * @param a
+     * @param mappings FieldMapping to map between fields at runtime.
+     *                 Sometimes a field is not accessible via reflection at runtime, therefor these mappings
+     *                 can provide an alternative field that holds the same information, but is public
+     * @param pre the prefix for the resulting [[Elem]]
+     * @param isRecursive tells the function, if the type was already trying to get parsed
+     * @param tt implicit type tag for [[A]]
+     * @param ct implicit class tag for [[A]]
+     * @tparam A the type that will be converted to an [[Elem]]
+     * @return
+     */
+    private[extension] def convertToXML[A] (a           : A,
+                                            mappings    : FieldMappings = Seq(),
+                                            pre         : String = null,
+                                            isRecursive : Boolean = false)
+                                           (implicit tt : TypeTag[A], ct : ClassTag[A]) : Elem = {
     
         val ttType    = getType(a)
         val typeParams = getTypeParams(ttType)

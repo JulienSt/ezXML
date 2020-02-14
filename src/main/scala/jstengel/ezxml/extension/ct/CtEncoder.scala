@@ -18,6 +18,15 @@ object CtEncoder {
     /**
      * creates a conversion from a to an [[Elem]]
      * @param a the value that will be converted to an [[Elem]]
+     * @param mappings a possible [[FieldMappings]], where cross connections to other fields are cached
+     * @tparam A the type that will be encoded
+     * @return
+     */
+    def xml[A](a: A, mappings : FieldMappings): Elem = macro xmlMappingImpl[A]
+    
+    /**
+     * creates a conversion from a to an [[Elem]]
+     * @param a the value that will be converted to an [[Elem]]
      * @tparam A the type that will be encoded
      * @return
      */
@@ -35,6 +44,22 @@ object CtEncoder {
     def xmlImpl[A](c: blackbox.Context)(a: c.Expr[A])(implicit ATag : c.WeakTypeTag[A]) : c.Expr[Elem] = {
         import c.universe.Quasiquote
         c.Expr[Elem](q"jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[${ATag.tpe}]($a)")
+    }
+    
+    /**
+     * implementation of [[xml]]
+     * @param c context, to access types and symbols, during compile time
+     *          (this is automatically added by calling the macro)
+     * @param a the value that will be converted to an [[Elem]]
+     * @param ATag the WeakTypeTag of [[A]], this is automatically filled in by the compiler
+     * @tparam A the type that will be encoded
+     * @return the expression that holds an [[Elem]] representation of a
+     */
+    def xmlMappingImpl[A](c: blackbox.Context)
+                  (a: c.Expr[A], mappings: c.Expr[FieldMappings])
+                  (implicit ATag : c.WeakTypeTag[A]) : c.Expr[Elem] = {
+        import c.universe.Quasiquote
+        c.Expr[Elem](q"jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[${ATag.tpe}]($mappings)($a)")
     }
     
     /**
@@ -180,16 +205,32 @@ object CtEncoder {
                 scala.xml.Attribute("value", scala.xml.Text(objectToBeEncoded.toString()), scala.xml.Null)
             """)
             
-        else if (aType <:< typeOf[Array[_]]) // todo include mapping
-            c.Expr[A => Elem](q""" (objectToBeEncoded: $aType) =>
-                scala.xml.Elem(${fieldName.getOrElse(c.Expr[String](q"null"))},
-                               $fullTypeName,
-                               scala.xml.Null,
-                               scala.xml.TopScope,
-                               false,
-                               objectToBeEncoded.map{e =>
-                                   jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[..$typeParams](e)}.toIndexedSeq: _*)
-                """)
+        else if (aType <:< typeOf[Array[_]]) {
+            val tree = mappings match {
+                case Some(m) =>
+                    q"""(objectToBeEncoded: $aType) => scala.xml.Elem(
+                            ${ fieldName.getOrElse(c.Expr[String](q"null")) },
+                            $fullTypeName,
+                            scala.xml.Null,
+                            scala.xml.TopScope,
+                            false,
+                            objectToBeEncoded.map{e =>
+                                jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[..$typeParams]($m)(e)
+                            }.toIndexedSeq: _*)"""
+                case None =>
+                    q"""(objectToBeEncoded: $aType) => scala.xml.Elem(
+                            ${ fieldName.getOrElse(c.Expr[String](q"null")) },
+                            $fullTypeName,
+                            scala.xml.Null,
+                            scala.xml.TopScope,
+                            false,
+                            objectToBeEncoded.map{e =>
+                                jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[..$typeParams](e)
+                            }.toIndexedSeq: _*)"""
+            }
+            
+            c.Expr[A => Elem](tree)
+        }
             
         else if (isConstructedThroughIterable(c)(aType, isCalledFromEnclosingClass))
             encodeIterable(c)(mappings, fieldName, aType, typeParams, fullTypeName)
@@ -235,10 +276,15 @@ object CtEncoder {
                                 aType                      : c.Type,
                                 isCalledFromEnclosingClass : Boolean,
                                 mappings                   : Option[c.Expr[FieldMappings]]) = {
-        import c.universe.{Quasiquote, Symbol, TermName, Tree, TypeName}
+        import c.universe.{Quasiquote, Symbol, TermName, Tree}
         c.Expr[A => Elem]({
-            
-            val elemAsTree = constructor
+            val objectToBeEncoded = TermName("objectToBeEncoded")
+            val getFieldCall: String => Tree = fName =>
+                if ( isCalledFromEnclosingClass )
+                    q"${TermName(fName)}"
+                else
+                    q"$objectToBeEncoded.${TermName(fName)}"
+            val constructorAsElemTree = constructor
                 .paramLists
                 .flatten
                 .foldLeft(q"""scala.xml.Elem(${ fieldName.getOrElse(c.Expr[String](q"null")) },
@@ -249,36 +295,44 @@ object CtEncoder {
                                              Seq(): _*)"""){ case (quote : Tree, field : Symbol) =>
                     val (fName, fieldType, fieldTypeAsString, _, shouldBeEncodedAtRuntime) =
                         getFieldInfo(c)(field, typeMap, createStringRepresentation(_))
-                    
-                    val fieldCall = if ( isCalledFromEnclosingClass )
-                                        q"${TermName(fName)}" // todo check if field is annotated with substitution
-                                    else
-                                        q"${ TermName("objectToBeEncoded") }.${TermName(fName)}"
-                    
-                    if (shouldBeEncodedAtRuntime)
-                        createRuntimeConversion(c)(aType, mappings, fieldName)
-                    
+                    val fieldCall = getFieldCall(fName)
+                                        
                     if ( isSimple(c)(fieldType) )
                         q"""$quote % scala.xml.Attribute($fieldTypeAsString,
                                                                ${ fName.toString },
                                                                scala.xml.Text($fieldCall.toString),
                                                                scala.xml.Null)"""
-                    else if ( fieldType.typeSymbol.isAbstract && fieldType.baseClasses.length <= 1 )
-                             q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
-                                scala.xml.Elem(prefix, label, attribs, scope, false, child ++
-                                jstengel.ezxml.extension.ct.CtEncoder.xmlMacroAsField[${
-                                 TypeName(fieldTypeAsString)
-                             }](${ fName.toString })($fieldCall): _*)"""
-                    else
+                    else if (shouldBeEncodedAtRuntime) {
+                        val fNameExpr = Some(c.Expr[String](q"$fName"))
                         q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
                                 scala.xml.Elem(prefix, label, attribs, scope, false, child ++
-                                jstengel.ezxml.extension.ct.CtEncoder.xmlMacroAsField[$fieldType](${
-                            fName.toString
-                        })($fieldCall): _*)"""
+                                ${ createRuntimeConversion(c)(fieldType, mappings, fNameExpr) }($fieldCall): _*)"""
+                    }
+                    else
+                        q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
+                                scala.xml.Elem(prefix, label, attribs, scope, false, child ++ jstengel.ezxml.extension
+                                .ct.CtEncoder.xmlMacroAsField[$fieldType]($fName)($fieldCall): _*)"""
                 }
-//            aType.decls.collect{case member if member.annotations.exists()}
-            // todo if called from enclosing class, collect all elems which are annotated with CacheXML
-            q"(objectToBeEncoded: $aType) => $elemAsTree"
+            val objectAsElemTree = aType
+                .decls
+                .flatMap(symbol => CacheXMLMacro.mapCache(c)(symbol))
+                .foldLeft(constructorAsElemTree){ case (quote : Tree, (cache : c.Symbol, targetName: String)) =>
+                    val originalFieldType        = getTypeParams(c)(cache.typeSignature.resultType).head
+                    val fCall                    = getFieldCall(targetName)
+                    val targetField = aType.decl(TermName(targetName))
+                    val shouldBeEncodedAtRuntime = targetField.annotations.exists(_.toString.contains("RuntimeXML")) ||
+                                                   targetField.typeSignature.typeSymbol.isAbstract
+                    if (shouldBeEncodedAtRuntime) {
+                        val fNameExpr = Some(c.Expr[String](q"$targetName"))
+                        q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
+                               scala.xml.Elem(prefix, label, attribs, scope, false, child ++
+                               ${createRuntimeConversion(c)(originalFieldType, mappings, fNameExpr)}($fCall): _*)"""
+                    } else
+                          q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
+                               scala.xml.Elem(prefix, label, attribs, scope, false, child ++ jstengel.ezxml.extension
+                               .ct.CtEncoder.xmlMacroAsField[$originalFieldType]($targetName)($fCall): _*)"""
+                }
+            q"($objectToBeEncoded: $aType) => $objectAsElemTree"
         })
     }
     
@@ -324,6 +378,7 @@ object CtEncoder {
     /**
      * creates a function call to RtEncoder.convertToXML
      * @param c         context, to access types and symbols, during compile time
+     * @param tpe
      * @param mappings  an optional expression of [[FieldMappings]] containing all the information
      * @param fieldName this represents a possible field the underlying simple type corresponds to
      * @param ATag      the type of [[A]] as c.Type

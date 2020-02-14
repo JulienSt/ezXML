@@ -8,15 +8,19 @@ import scala.xml.{Elem, PrefixedAttribute, Text}
 import scala.reflect.runtime.universe.TypeTag
 
 object AnnotatedExampleClasses {
-    
-    
+
+// todo these two classes currently don't work due to the generics
+//  generics and static annotations don't really mix well, therefor this topic is left open for a later release
+//
 //    class AnnotatedTypeParameterTestClass1[T1, T2, T3] (a : T1, b : T2, c : T1, d : T3)
 //                                                       (implicit tt1: TypeTag[T1],
 //                                                        ct1: ClassTag[T1],
 //                                                        tt2: TypeTag[T2],
 //                                                        ct2: ClassTag[T2],
 //                                                        tt3: TypeTag[T3],
-//                                                        ct3: ClassTag[T3]) extends jstengel.ezxml.extension.XmlClassTrait {
+//                                                        ct3: ClassTag[T3])
+//        extends jstengel.ezxml.extension.XmlClassTrait {
+//
 //        val (a1, b1, c1, d1) = (a, b, c, d)
 //
 //        override def equals (obj : Any) : Boolean = obj match {
@@ -30,8 +34,20 @@ object AnnotatedExampleClasses {
 //        override def encode : Elem = CtEncoder.xmlMacro[AnnotatedTypeParameterTestClass1[T1, T2, T3]](this)
 //    }
 //
-//    class CTSpecialTypeParameterTestClass2[T1, T2](a: T2, b: T1, c: T1*) {
-//
+//    class CTSpecialTypeParameterTestClass2[T1, T2](a: T2, b: T1, c: T1*)(implicit tt1: TypeTag[T1],
+//                                                                         ct1: ClassTag[T1],
+//                                                                         tt2: TypeTag[T2],
+//                                                                         ct2: ClassTag[T2])
+//        extends jstengel.ezxml.extension.XmlClassTrait {
+//        val (a1, b1, c1) = (a, b, c)
+//        override def equals (obj : Any) : Boolean = obj match {
+//            case other : CTSpecialTypeParameterTestClass2[T1, T2] =>
+//                a == other.a1 &&
+//                b == other.b1 &&
+//                c == other.c1
+//        }
+//        override def toString : String = s"CTSpecialTypeParameterTestClass2($a, $b, $c)"
+//        override def encode : Elem = CtEncoder.xmlMacro[CTSpecialTypeParameterTestClass2[T1, T2]](this)
 //    }
     
     @Xml class AnnotatedStrangeIterator(val id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {

@@ -9,9 +9,10 @@ import internal.typeRef
 
 /**
  * This tree corresponds to a type with type parameters.
- * todo description
- * @param parentType
- * @param typeParams
+ * With this class a type can be loaded that is only given as a string
+ * @param parentType the ClassName in ClassName[Type1, Type2[Type3] ]
+ * @param typeParams everything in the brackets in ClassName[Type1, Type2[Type3] ], but already parsed to span the
+ *                   correct tree
  */
 private class StringTypeTree (parentType : String, val typeParams : List[StringTypeTree]) {
     /**
@@ -31,9 +32,10 @@ private class StringTypeTree (parentType : String, val typeParams : List[StringT
 private[extension] object StringTypeTree {
     
     /**
-     * todo description
-     * @param s
-     * @return
+     * this apply method creates a StringTypeTree by parsing a className with type parameters
+     * @param s the name of the class with tParams in the form of:
+     *          ClassName[Type1, Type2[Type3] ]
+     * @return a StringTypeTree, with which you can load the type/class associated with the given string
      */
     private def apply (s : String) : StringTypeTree = {
         if ( s.isEmpty ) throw new Exception

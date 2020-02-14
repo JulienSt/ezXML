@@ -94,10 +94,11 @@ private[ct] object CompileTimeReflectHelper {
         val tempFieldType            = typeMap.getOrElse(fieldTypeSig, fieldTypeSig)
         val tempFieldTypeAsString    = createStringRepresentation(tempFieldType)
         val isRepeated               = tempFieldTypeAsString.startsWith("scala.<repeated>")
-        val shouldBeEncodedAtRuntime = field.annotations.exists(RuntimeXML.isRuntimeAnnotation(c))
+        val shouldBeEncodedAtRuntime = field.annotations.exists(_.toString.contains("RuntimeXML"))
         if ( isRepeated ) {
             val repeatedType       = getTypeParams(c)(tempFieldType).head
             val actualRepeatedType = typeMap.getOrElse(repeatedType, repeatedType)
+            /* create new Seq-type for the repeated field */
             val fieldTypeAsSeq     = c.typeOf[Seq[Nothing]] match {
                 case c.universe.TypeRef(t, s, _) =>
                     c.internal.typeRef(t.asInstanceOf[c.universe.Type],

@@ -1,52 +1,33 @@
 package jstengel.ezxml.extension.mapping
 
-import jstengel.ezxml.extension.rt.{RtDecoder, RtEncoder}
-import jstengel.ezxml.core.SimpleWrapper.NodeWrapper
 import jstengel.ezxml.extension.ct.CtEncoder
+import jstengel.ezxml.extension.mapping.MappingExamples.{A, B}
 import jstengel.ezxml.extension.rt.{RtDecoder, RtEncoder}
+import org.junit.runner.RunWith
+import org.scalatest.FlatSpec
+import org.scalatestplus.junit.JUnitRunner
 
-import scala.xml.{Elem, Text, UnprefixedAttribute}
+import scala.xml.Elem
 
-// todo create a unit test for this
-object MappingTest extends App {
+@RunWith(classOf[JUnitRunner])
+class MappingTest extends FlatSpec {
 
-    class A(field: Int) {
-        val substitution: Int = field * 2
-    
-        override def toString : String = s"A($field)"
+    val a                     = new A(23)
+    val map : FieldMapping[A] = FieldMapping[A]("field" -> "substitution")
+    s"\n$a" should s" load with $map" in {
+        val xml = RtEncoder.convertToXML(a, Seq(map))
+        assert(a == RtDecoder.load[A](xml))
     }
 
-    val a = new A(23)
-    
-    val map = FieldMapping[A]("field" -> "substitution")
-    
-    val xml = RtEncoder.convertToXML(a, Seq(map))
-    
-    println(a)
-    println(xml)
-    println(RtDecoder.load[A](xml))
-    
-    case class B (a: Int, b:  String)
-    
-    val b = B(123, "test")
-    
-//    println(RtDecoder.load[B](RtDecoder.load[Elem](CtEncoder.xml(CtEncoder.xml(b), Seq(
-//        FieldMapping[Elem]("attributes1" -> "attributes"),
-//        FieldMapping[Text]("data" -> "text"),
-//        FieldMapping[UnprefixedAttribute]("next1" -> "next")
-//    )))))
-    
-//    println(CtEncoder.xml(b).toPrettyXMLString)
-//
-//    println(CtEncoder.xml(CtEncoder.xml(b), FieldMappings(
-//        FieldMapping[scala.xml.Elem]("attributes1" -> "attributes"),
-//        FieldMapping[scala.xml.Text]("data" -> "text"),
-//        FieldMapping[scala.xml.UnprefixedAttribute]("next1" -> "next")
-//    )).toPrettyXMLString)
-//
-//    println(RtDecoder.load[Elem](CtEncoder.xml(CtEncoder.xml(b), FieldMappings(
-//        FieldMapping[scala.xml.Elem]("attributes1" -> "attributes"),
-//        FieldMapping[scala.xml.Text]("data" -> "text"),
-//        FieldMapping[scala.xml.UnprefixedAttribute]("next1" -> "next")
-//    ))).toPrettyXMLString)
+    val b         : B    = B(123, "test")
+    val maps = Seq(
+        FieldMapping[scala.xml.Elem]("attributes1" -> "attributes"),
+        FieldMapping[scala.xml.Text]("data" -> "text"),
+        FieldMapping[scala.xml.UnprefixedAttribute]("next1" -> "next")
+        )
+    s"\n$b" should s" load with $maps" in {
+        val doubleXML : Elem = CtEncoder.xml(CtEncoder.xml(b), maps)
+        assert(b == RtDecoder.load[B](RtDecoder.load[Elem](doubleXML)) )
+    }
+
 }

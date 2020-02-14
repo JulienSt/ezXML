@@ -6,16 +6,18 @@ import scala.reflect.macros.whitebox
 
 
 /**
- *
+ * this macro prepares an annotated class, so that it automatically has encoding and decoding functions
  */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
 class Xml extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro XMLMacro.impl
 }
 
+//noinspection DuplicatedCode
 object XMLMacro {
+    
     def impl (c : whitebox.Context)(annottees : c.Expr[Any]*): c.Expr[Any] = {
-        import c.universe.{Quasiquote, Tree, TermName}
+        import c.universe.{Quasiquote, TermName, Tree}
         
         val resultAsTree = annottees map ( _.tree ) match {
             case q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents
