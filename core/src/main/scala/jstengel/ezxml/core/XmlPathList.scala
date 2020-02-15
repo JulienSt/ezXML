@@ -6,7 +6,7 @@ import scala.xml.{Elem, Node}
 
 
 /**
- *
+ * todo
  * @param paths
  */
 case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
@@ -25,45 +25,23 @@ case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
             }
         }.flatten)
     }
-    
-    /**
-     *
-     * @param childNodeName the name of the child that is searched for
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.\~]] */
     override def \~ (childNodeName : String) : OptionalPath =
         traverse(_ \~ childNodeName)
-    
-    /**
-     *
-     * @param childNodeName
-     * @param predicate
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.\~]] */
     override def \~ (childNodeName: String, predicate: Elem => Boolean): OptionalPath =
         traverse(_ \~ (childNodeName, predicate))
-    
-    /**
-     *
-     * @param childNodeName
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.\\~]] */
     override def \\~ (childNodeName: String): OptionalPath =
         traverse(_ \\~ childNodeName)
-    
-    /**
-     *
-     * @param childNodeName
-     * @param predicate
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.\\~]] */
     override def \\~ (childNodeName: String, predicate: Elem => Boolean): OptionalPath =
         traverse(_ \\~ (childNodeName, predicate))
-    
-    /**
-     *
-     * @return
-     */
+
     override def toString : String = s"XmlPathList(\n ${paths.mkString(",\n")} \n)"
     
     /**
@@ -171,48 +149,23 @@ case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
             Some(bubbleUpwards(partition.head, partition.tail))
         }
     }
-    
-    /**
-     *
-     * @param children the nodes that will be added to the children of the elems at the end of the underlying path
-     * @return the overall structure with a child added to all the elems,
-     *         that where pointed to with the underlying Path
-     */
+
+    /** @see [[WalkableXmlPath.addChildren]] */
     override def addChildren (children : Node*) : Option[Elem] = changeTargets(_.addChildren(children: _*))
-    
-    /**
-     *
-     * @param predicate
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.deleteChildren]] */
     override def deleteChildren (predicate: Node => Boolean): Option[Elem] = changeTargets(_.deleteChildren(predicate))
-    
-    /**
-     *
-     * @param predicate
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.filterChildren]] */
     override def filterChildren (predicate: Node => Boolean): Option[Elem] = changeTargets(_.filterChildren(predicate))
-    
-    /**
-     *
-     * @param f
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.mapChildren]] */
     override def mapChildren (f: Node => Node): Option[Elem] = changeTargets(_.mapChildren(f))
-    
-    /**
-     *
-     * @param f
-     * @return
-     */
-    override def flatMapChildren (f: Node => Option[Node]): Option[Elem] = changeTargets(_.flatMapChildren(f))
-    
-    /**
-     *
-     * @param f
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.flatMapChildren]] */
+    override def flatMapChildren (f: Node => IterableOnce[Node]): Option[Elem] = changeTargets(_.flatMapChildren(f))
+
+    /** @see [[WalkableXmlPath.transformTarget]] */
     override def transformTarget (f: Elem => Elem): Option[Elem] = changeTargets(_.transformRoot(f))
 
 }

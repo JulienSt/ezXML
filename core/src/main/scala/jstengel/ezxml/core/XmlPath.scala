@@ -5,31 +5,38 @@ import SimpleWrapper.{ElemWrapper, NodeWrapper}
 import scala.annotation.tailrec
 import scala.xml.{Elem, Node}
 
-
+/**
+ * todo
+ * @param parentElem
+ * @param targetElem
+ * @param targetIndex
+ * @param pathDepth
+ * @param ancestorPath
+ */
 case class XmlPath (parentElem   : Elem,
                     targetElem   : Elem,
                     targetIndex  : Int,
                     pathDepth    : Int,
                     ancestorPath : Option[XmlPath] = None) extends WalkableXmlPath {
     
-    /** See [[WalkableXmlPath]] */
+    /** @see [[WalkableXmlPath.\~]] */
     override def \~ (childNodeName : String) : OptionalPath =
         OptionalPath(XmlPath \~ (targetElem, childNodeName, ancestorPath = Some(this)))
-    
-    /** See [[WalkableXmlPath]] */
+
+    /** @see [[WalkableXmlPath.\~]] */
     override def \~ (childNodeName : String, predicate : Elem => Boolean) : OptionalPath =
         OptionalPath(XmlPath \~ (targetElem, childNodeName, predicate, ancestorPath = Some(this)))
-    
-    /** See [[WalkableXmlPath]] */
+
+    /** @see [[WalkableXmlPath.\\~]] */
     override def \\~ (childNodeName : String) : OptionalPath =
         OptionalPath(XmlPath \\~ (targetElem, childNodeName, ancestorPath = Some(this)))
-    
-    /** See [[WalkableXmlPath]] */
+
+    /** @see [[WalkableXmlPath.\\~]] */
     override def \\~ (childNodeName : String, predicate : Elem => Boolean) : OptionalPath =
         OptionalPath(XmlPath \\~ (targetElem, childNodeName, predicate, ancestorPath = Some(this)))
     
     /**
-     *
+     * todo
      * @param changedTarget
      * @param next
      * @return
@@ -45,33 +52,33 @@ case class XmlPath (parentElem   : Elem,
             case None        => aggregation
         }
     }
-    
-    /** See [[WalkableXmlPath]] */
+
+    /** @see [[WalkableXmlPath.addChildren]] */
     override def addChildren (children : Node*) : Option[Elem] =
         Some(aggregateChange(targetElem.addChildren(children : _*), this))
-    
-    /** See [[WalkableXmlPath]] */
+
+    /** @see [[WalkableXmlPath.deleteChildren]] */
     override def deleteChildren (predicate : Node => Boolean) : Option[Elem] =
         Some(aggregateChange(targetElem.deleteChildren(predicate), this))
-    
-    /** See [[WalkableXmlPath]] */
+
+    /** @see [[WalkableXmlPath.filterChildren]] */
     override def filterChildren (predicate : Node => Boolean) : Option[Elem] =
         Some(aggregateChange(targetElem.filterChildren(predicate), this))
-    
-    /** See [[WalkableXmlPath]] */
+
+    /** @see [[WalkableXmlPath.mapChildren]] */
     override def mapChildren (f : Node => Node) : Option[Elem] =
         Some(aggregateChange(targetElem.mapChildren(f), this))
-    
-    /** See [[WalkableXmlPath]] */
-    override def flatMapChildren (f : Node => Option[Node]) : Option[Elem] =
+
+    /** @see [[WalkableXmlPath.flatMapChildren]] */
+    override def flatMapChildren (f : Node => IterableOnce[Node]) : Option[Elem] =
         Some(aggregateChange(targetElem.flatMapChildren(f), this))
-    
-    /** See [[WalkableXmlPath]] */
+
+    /** @see [[WalkableXmlPath.transformTarget]] */
     override def transformTarget (f : Elem => Elem) : Option[Elem] =
         Some(aggregateChange(targetElem.transformRoot(f), this))
     
     /**
-     *
+     * todo
      * @return
      */
     def completePath : String = {
@@ -85,19 +92,21 @@ case class XmlPath (parentElem   : Elem,
         aggregatePath("", this)
     }
     
-    override def toString : String = {
-        s"XmlPath(${ targetElem.toPrettyXMLString }, $completePath, $targetIndex)"
-    }
+    override def toString : String = s"XmlPath(${ targetElem.toPrettyXMLString }, $completePath, $targetIndex)"
+
 }
 
 
 object XmlPath {
-    
-    val matchesLabel : String => Node => Boolean = childLabel => {
-        case Elem(_, label, _, _, _*) => label == childLabel
-        case _                        => false
-    }
-    
+
+    /**
+     * todo
+     * @param parent
+     * @param target
+     * @param predicate
+     * @param ancestorPath
+     * @return
+     */
     def extractPath (parent : Elem,
                      target : String,
                      predicate : Elem => Boolean,
@@ -109,9 +118,18 @@ object XmlPath {
                     ancestorPath.map(_.pathDepth + 1).getOrElse(1),
                     ancestorPath)
     }
-    
-    val default : PartialFunction[(Node, Int), Option[XmlPath]] = {case _ => None}
-    
+
+    /* */
+    private val default : PartialFunction[(Node, Int), Option[XmlPath]] = {case _ => None}
+
+    /**
+     * todo
+     * @param parent
+     * @param target
+     * @param predicate
+     * @param ancestorPath
+     * @return
+     */
     def \~ (parent : Elem,
             target : String,
             predicate : Elem => Boolean = _ => true,
@@ -123,7 +141,15 @@ object XmlPath {
                                default
                            }
                            .toList)
-    
+
+    /**
+     * todo
+     * @param parent
+     * @param target
+     * @param predicate
+     * @param ancestorPath
+     * @return
+     */
     def \\~ (parent : Elem,
              target : String,
              predicate : Elem => Boolean = _ => true,
@@ -161,8 +187,5 @@ object XmlPath {
         val (foundPaths, bridgePaths) = splitChildren(parent, target, ancestorPath)
         OptionalPath(aggregate(foundPaths, bridgePaths))
     }
-    
-    // move from level to level with "_" and collect all children which label matches the given string
-    //    def \\
     
 }

@@ -5,94 +5,52 @@ import scala.xml.{Elem, Node}
 
 
 /**
- *
+ * todo
+ * Represents
  * @param oPath
  */
 case class OptionalPath (oPath : Option[WalkableXmlPath]) extends WalkableXmlPath {
-    
-    /**
-     *
-     * @param childNodeName
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.\~]] */
     override def \~ (childNodeName : String) : OptionalPath = oPath match {
         case Some(connector) => connector \~ childNodeName
         case None => this
     }
-    
-    /**
-     *
-     * @param childNodeName
-     * @param predicate
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.\~]] */
     override def \~ (childNodeName: String, predicate: Elem => Boolean): OptionalPath = oPath match {
         case Some(connector) => connector \~ (childNodeName, predicate)
         case None => this
     }
-    
-    /**
-     *
-     * @param childNodeName
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.\\~]] */
     override def \\~ (childNodeName: String): OptionalPath = oPath match {
         case Some(connector) => connector \\~ childNodeName
         case None => this
     }
-    
-    /**
-     *
-     * @param childNodeName
-     * @param predicate
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.\\~]] */
     override def \\~ (childNodeName: String, predicate: Elem => Boolean): OptionalPath = oPath match {
         case Some(connector) => connector \\~ (childNodeName, predicate)
         case None => this
     }
-    
-    /**
-     *
-     * @param children the nodes that will be added to the children of the elems at the end of the underlying path
-     * @return the overall structure with a child added to all the elems,
-     *         that where pointed to with the underlying Path
-     */
+
+    /** @see [[WalkableXmlPath.addChildren]] */
     override def addChildren (children : Node*) : Option[Elem] = oPath.flatMap(_.addChildren(children: _*))
-    
-    /**
-     *
-     * @param predicate
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.deleteChildren]] */
     override def deleteChildren (predicate: Node => Boolean): Option[Elem] = oPath.flatMap(_.deleteChildren(predicate))
-    
-    /**
-     *
-     * @param predicate
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.filterChildren]] */
     override def filterChildren (predicate: Node => Boolean): Option[Elem] = oPath.flatMap(_.filterChildren(predicate))
-    
-    /**
-     *
-     * @param f
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.mapChildren]] */
     override def mapChildren (f: Node => Node): Option[Elem] = oPath.flatMap(_.mapChildren(f))
-    
-    /**
-     *
-     * @param f
-     * @return
-     */
-    override def flatMapChildren (f: Node => Option[Node]): Option[Elem] = oPath.flatMap(_.flatMapChildren(f))
-    
-    /**
-     *
-     * @param f
-     * @return
-     */
+
+    /** @see [[WalkableXmlPath.flatMapChildren]] */
+    override def flatMapChildren (f: Node => IterableOnce[Node]): Option[Elem] = oPath.flatMap(_.flatMapChildren(f))
+
+    /** @see [[WalkableXmlPath.transformTarget]] */
     override def transformTarget (f: Elem => Elem): Option[Elem] = oPath.flatMap(_.transformTarget(f))
 
 }
@@ -100,7 +58,7 @@ case class OptionalPath (oPath : Option[WalkableXmlPath]) extends WalkableXmlPat
 object OptionalPath {
     
     /**
-     *
+     * todo
      * @param connector
      * @return
      */
@@ -111,7 +69,7 @@ object OptionalPath {
     }
     
     /**
-     *
+     * todo
      * @param pathList
      * @return
      */
