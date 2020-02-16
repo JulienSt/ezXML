@@ -9,10 +9,10 @@ trait BasicChangeTest { this: FlatSpec =>
         <bla>
             <aaa>
                 <c/>
-                <d data="heyhey"/>
+                <d data="test Data"/>
             </aaa>
             <bbb>
-                <d data="du da"/>
+                <d data="test"/>
             </bbb>
         </bla>
     def testAdding(testableFunction : Elem => Elem, target : Elem): Unit = {

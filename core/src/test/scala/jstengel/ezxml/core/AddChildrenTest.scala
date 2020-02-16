@@ -16,10 +16,10 @@ class BasicAddTest extends FlatSpec with BasicChangeTest {
                <bla>
                    <aaa>
                        <c/>
-                       <d data="heyhey"/>
+                       <d data="test Data"/>
                    </aaa>
                    <bbb>
-                       <d data="du da"/>
+                       <d data="test"/>
                    </bbb>
                    <newChild></newChild>
                </bla>)
@@ -27,10 +27,10 @@ class BasicAddTest extends FlatSpec with BasicChangeTest {
                <bla>
                    <aaa>
                        <c/>
-                       <d data="heyhey"/>
+                       <d data="test Data"/>
                    </aaa>
                    <bbb>
-                       <d data="du da"/>
+                       <d data="test"/>
                    </bbb>
                    <newChild></newChild>
                    <data/>
@@ -44,12 +44,12 @@ class BasicSubAddTest extends FlatSpec with BasicChangeTest {
                <bla>
                    <aaa>
                        <c/>
-                       <d data="heyhey">
+                       <d data="test Data">
                            <newChild></newChild>
                        </d>
                    </aaa>
                    <bbb>
-                       <d data="du da"/>
+                       <d data="test"/>
                    </bbb>
                </bla>)
 }
@@ -57,14 +57,14 @@ class BasicSubAddTest extends FlatSpec with BasicChangeTest {
 /* test that the predicate is used correctly */
 //@RunWith(classOf[JUnitRunner])
 class PredicateAddTest extends FlatSpec with BasicChangeTest {
-    testAdding(_ \~ "_" \~ ("d", _ \@ "data" == "du da") addChildren <newChild></newChild> get,
+    testAdding(_ \~ "_" \~ ("d", _ \@ "data" == "test") addChildren <newChild></newChild> get,
                <bla>
                    <aaa>
                        <c/>
-                       <d data="heyhey"/>
+                       <d data="test Data"/>
                    </aaa>
                    <bbb>
-                       <d data="du da">
+                       <d data="test">
                            <newChild></newChild>
                        </d>
                    </bbb>
@@ -73,12 +73,12 @@ class PredicateAddTest extends FlatSpec with BasicChangeTest {
                <bla>
                    <aaa>
                        <c/>
-                       <d data="heyhey">
+                       <d data="test Data">
                            <newChild></newChild>
                        </d>
                    </aaa>
                    <bbb>
-                       <d data="du da">
+                       <d data="test">
                            <newChild></newChild>
                        </d>
                    </bbb>
@@ -103,12 +103,12 @@ class MultipleAddTest extends FlatSpec with BasicChangeTest {
                              <bla>
                                  <aaa>
                                      <c/>
-                                     <d data="heyhey">
+                                     <d data="test Data">
                                          <newChild></newChild>
                                      </d>
                                  </aaa>
                                  <bbb>
-                                     <d data="du da">
+                                     <d data="test">
                                          <newChild></newChild>
                                      </d>
                                  </bbb>
@@ -123,10 +123,10 @@ class MultipleChoiceAddTest extends FlatSpec with BasicChangeTest {
             <test/>
             <aaa>
                 <c/>
-                <d data="heyhey"/>
+                <d data="test Data"/>
             </aaa>
             <bbb>
-                <aaa data="du da"/>
+                <aaa data="test"/>
                 <test/>
             </bbb>
         </bla>
@@ -135,11 +135,11 @@ class MultipleChoiceAddTest extends FlatSpec with BasicChangeTest {
                      <test/>
                      <aaa>
                          <c/>
-                         <d data="heyhey"/>
+                         <d data="test Data"/>
                          <newChild></newChild>
                      </aaa>
                      <bbb>
-                         <aaa data="du da"/>
+                         <aaa data="test"/>
                          <test/>
                      </bbb>
                  </bla>)
@@ -148,13 +148,54 @@ class MultipleChoiceAddTest extends FlatSpec with BasicChangeTest {
                                  <test/>
                                  <aaa>
                                      <c/>
-                                     <d data="heyhey"/>
+                                     <d data="test Data"/>
                                  </aaa>
                                  <bbb>
-                                     <aaa data="du da"/>
+                                     <aaa data="test"/>
                                      <test>
                                          <newChild></newChild>
                                      </test>
                                  </bbb>
                              </bla>)
+}
+
+/* test that changes are merged correctly */
+@RunWith(classOf[JUnitRunner])
+class MergeChangeTest extends FlatSpec with BasicChangeTest {
+    override val original : Elem =
+        <Test data="test1">
+            <Test data="test21">
+                <Test data="test31"/>
+                <A data="testA1"/>
+                <B data="testB1"/>
+                <C data="testC1"/>
+                <D data="testD1"/>
+            </Test>
+            <Test data="test22">
+                <Test data="test32"/>
+                <A data="testA2"/>
+                <B data="testB2"/>
+                <C data="testC2"/>
+                <D data="testD2"/>
+            </Test>
+        </Test>
+    testAdding(elem => {
+                   (elem \\~ ("_", e => (e \@ "data").nonEmpty)).transformTarget(_.setAttribute("data", "value")) get
+               },
+               <Test data="test1">
+                   <Test data="value">
+                       <Test data="value"/>
+                       <A data="value"/>
+                       <B data="value"/>
+                       <C data="value"/>
+                       <D data="value"/>
+                   </Test>
+                   <Test data="value">
+                       <Test data="value"/>
+                       <A data="value"/>
+                       <B data="value"/>
+                       <C data="value"/>
+                       <D data="value"/>
+                   </Test>
+               </Test>)
 }

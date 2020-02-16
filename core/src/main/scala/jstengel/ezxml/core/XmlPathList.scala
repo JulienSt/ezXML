@@ -1,20 +1,23 @@
 package jstengel.ezxml.core
 
-import SimpleWrapper.ElemWrapper
+import jstengel.ezxml.core.SimpleWrapper.ElemWrapper
+
 import scala.annotation.tailrec
 import scala.xml.{Elem, Node}
 
 
 /**
- * todo
- * @param paths
+ * This class holds multiple [[XmlPath]]s in a list and in that way represents a splitting search path, created
+ * by the functions [[WalkableXmlPath.\~]] or [[WalkableXmlPath.\\~]]
+ * @param paths all [[XmlPath]]s that were selected to previous use of [[WalkableXmlPath.\~]] or [[WalkableXmlPath.\\~]]
  */
 case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
     
     /**
-     *
-     * @param traversalFunction
-     * @return
+     * traverses every path inside [[paths]] with the same method of traversal
+     * @param traversalFunction this function is either [[WalkableXmlPath.\~]] or [[WalkableXmlPath.\\~]]
+     * @return a new OptionalPath, with the WalkableXmlPath targeted by [[WalkableXmlPath.\~]] and
+     *         [[WalkableXmlPath.\\~]]
      */
     private def traverse(traversalFunction : XmlPath => OptionalPath): OptionalPath = {
         OptionalPath(paths.flatMap{ path =>
@@ -47,8 +50,9 @@ case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
     /**
      * iterate over all paths of the current depth and cluster them into lists,
      * where each path has the exact same parent elem
-     * @param unsorted
-     * @return
+     * @param unsorted a list with all XmlPaths on the same depth
+     * @return a List of List of [[XmlPath]], where every path in the inner List has the same ancestors and is therefor
+     *         able to merge in the next step under the same parent elem.
      */
     private def clusterByParent(unsorted: List[XmlPath]): List[List[XmlPath]] = {
         val currentHead :: currentTail = unsorted
@@ -67,13 +71,18 @@ case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
     }
     
     /**
-     * merge all paths inside the list under the same parent elem
-     * @param clusteredLists
+     * merge all paths inside the list under the same parent elem and then apply f to each path that was a previous
+     * member of [[paths]]
+     * @param clusteredLists the output of [[clusterByParent]]
+     * @param f the function that changes the xml elems along the way.
      * @return either single element List with the top level elem or a List of parent paths propagating the change
      *         (depending on the fact if there is a depth-level above or not)
+     *         The result is only ever of one sub type of [[Either]]. So, either a List with only [[Left[XmlPath] ]] or
+     *         a List with only one [[Right[Elem] ]]
      */
-    private def mergePathsUnderParent (clusteredLists : List[List[XmlPath]]): List[Either[XmlPath, Elem]] = {
-        clusteredLists.map(list => {
+    private def mergeAndChangePaths (clusteredLists : List[List[XmlPath]],
+                                     f              : Elem => Elem): List[Either[XmlPath, Elem]] =
+        clusteredLists.map( list => {
             val Elem(pre, lbl, att, meta, children @ _*) = list.head.parentElem
             val ancestorTarget = Elem(pre,
                                       lbl,
@@ -82,37 +91,59 @@ case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
                                       true,
                                       children.zipWithIndex.map{
                                           case (e : Elem, i) =>
-                                              list.find(_.targetIndex == i)
-                                                  .map(_.targetElem)
+                                              list.find(_.targetIndex == i) /* find the matching elem to e in the clustered Elems */
+                                                  .map{
+                                                      case XmlPath(_, te, _, _, _, true) => f(te)
+                                                      case path => path.targetElem
+                                                  }
                                                   .getOrElse(e)
                                           case (n, _)        => n
                                       } : _*)
             list.head
                 .ancestorPath
-                .map{ case XmlPath(pe, _, ti, pd, ap) => Left(XmlPath(pe, ancestorTarget, ti, pd, ap)) }
+                .map{ case XmlPath(pe, _, ti, pd, ap, _) =>
+                    /* when we apply a change to the final targets, the parents value for "changesTarget" might still
+                       be true, because it was a target during the searching process. This value now interferes with
+                       the merging process and leads to unwanted changes, therefor it is ignored */
+                    Left(XmlPath(pe, ancestorTarget, ti, pd, ap))
+                }
                 .getOrElse(Right(ancestorTarget))
         })
-    }
     
     /**
      * merges all paths into an eventual top parent elem
-     * @param pathsOnCurrentDepth
-     * @param nextPaths
-     * @return
+     * Merges the paths level by level into
+     * @param pathsOnCurrentDepth This List was a former inner List of nextPaths, and contains [[XmlPath]]s of the
+     *                            currently deepest level. The function f will be applied to this list first, before
+     *                            they are merged among themselves and past to the along to the next height.
+     * @param nextPaths a List of List of XmlPath, where each inner List only holds XmlPath with the same depth
+     * @param f the function that changes the xml elems along the way.
+     * @return the original root node, where all targeted [[Elem]]s have been changed according to f
      */
-    @tailrec private def bubbleUpwards (pathsOnCurrentDepth : List[XmlPath], nextPaths : List[List[XmlPath]]) : Elem = {
-        val ancestorPathsWithPropagatedChange = (clusterByParent _ andThen mergePathsUnderParent)(pathsOnCurrentDepth)
-        ancestorPathsWithPropagatedChange.head match {
+    @tailrec private def bubbleUpwards (pathsOnCurrentDepth : List[XmlPath],
+                                        nextPaths : List[List[XmlPath]],
+                                        f : Elem => Elem) : Elem = {
+        val clusteredParents        = clusterByParent(pathsOnCurrentDepth)
+        val ancestorPathsWithChange = mergeAndChangePaths(clusteredParents, f)
+        ancestorPathsWithChange.head match {
             case Left(path)    =>
                 /* since the head is Left, all elements will be Left. Therefore, the List can be flattened */
-                val ancestorPaths = ancestorPathsWithPropagatedChange.map{ guaranteedLeft =>
+                val ancestorPathsWithChanges = ancestorPathsWithChange.map{ guaranteedLeft =>
                     val Left(xmlPath) = guaranteedLeft
                     xmlPath
                 }
-                if ( nextPaths.nonEmpty && nextPaths.head.head.pathDepth == path.pathDepth )
-                    bubbleUpwards(ancestorPaths ::: nextPaths.head, nextPaths.tail)
-                else
-                    bubbleUpwards(ancestorPaths, nextPaths)
+                if ( nextPaths.nonEmpty && nextPaths.head.head.pathDepth == path.pathDepth ) {
+                    val (duplicatePaths, filteredNextPaths) =
+                        nextPaths.head.partition(next => ancestorPathsWithChanges.exists(_.hasSameTarget(next)))
+                    val changingAncestors = ancestorPathsWithChanges.map(aP => {
+                        if (duplicatePaths.exists(_.hasSameTarget(aP)))
+                            aP.copy(changesTarget = true)
+                        else
+                            aP
+                    })
+                    bubbleUpwards(changingAncestors ::: filteredNextPaths, nextPaths.tail, f)
+                } else
+                    bubbleUpwards(ancestorPathsWithChanges, nextPaths, f)
             case Right(result) => result
         }
     }
@@ -127,26 +158,23 @@ case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
         case Nil                                                               => partitioned
         case head :: tail if partitioned.head.head.pathDepth == head.pathDepth =>
             part(tail, (head :: partitioned.head) :: partitioned.tail)
-        case head :: tail                                                      => part(tail, List(head) :: partitioned)
+        case head :: tail                                                      =>
+            part(tail, List(head) :: partitioned)
     }
     
-    // fürs verändern werden alle pfade solange hoch gebubbelt, bis man beim gleichen ancestor ankommt
-    // dort werden die bisherigen änderungen gemerget und dann einfach weiter hoch-gebubbelt
     /**
-     *
-     * @param f
-     * @return
+     * Changes every target of the XmlPaths inside [[paths]] and then bubbles these changes upwards the xml structure.
+     * @param f the function that will be applied to every target in [[paths]]
+     * @return a completely new xml-structure, where the desired changes have been made
      */
     private def changeTargets (f: Elem => Elem) : Option[Elem] = {
         if (paths.isEmpty)
             None
         else {
-            val pathsWithChangedTarget = paths.map{ case XmlPath(pe, te, ti, pd, ap) =>
-                XmlPath(pe, f(te), ti, pd, ap)
-            }
-            val presorted = pathsWithChangedTarget.sortWith{case (p1, p2) => p1.pathDepth < p2.pathDepth}
+            /* sorting the list with smallest depth first, because the partitioning reverses this orientation */
+            val presorted = paths.sortWith{case (p1, p2) => p1.pathDepth < p2.pathDepth}
             val partition = part(presorted.tail, List(List(presorted.head)))
-            Some(bubbleUpwards(partition.head, partition.tail))
+            Some(bubbleUpwards(partition.head, partition.tail, f))
         }
     }
 
@@ -166,6 +194,9 @@ case class XmlPathList (paths : List[XmlPath]) extends WalkableXmlPath {
     override def flatMapChildren (f: Node => IterableOnce[Node]): Option[Elem] = changeTargets(_.flatMapChildren(f))
 
     /** @see [[WalkableXmlPath.transformTarget]] */
-    override def transformTarget (f: Elem => Elem): Option[Elem] = changeTargets(_.transformRoot(f))
+    override def transformTarget (f: Elem => Elem): Option[Elem] = changeTargets(f)
+
+    /** @see [[WalkableXmlPath.transformTargetRoot]] */
+    override def transformTargetRoot (f: Elem => Elem): Option[Elem] = changeTargets(_.transformRoot(f))
 
 }

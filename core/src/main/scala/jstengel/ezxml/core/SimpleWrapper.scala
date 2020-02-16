@@ -1,6 +1,7 @@
 package jstengel.ezxml.core
 
-import scala.xml.{Attribute, Elem, Node, NodeSeq, Null, PrettyPrinter, Text}
+
+import scala.xml._
 
 object SimpleWrapper {
 
@@ -187,13 +188,105 @@ object SimpleWrapper {
          * @return true if elem.label == label or the given string is of value "_"
          */
         private[core] def hasCorrectLabel(label: String): Boolean = elem.label == label || label == "_"
-
+    
+        /**
+         * With this method all labels inside the entire structure of elem will be renamed
+         *
+         * @note be careful to not rename two different labels with the same replacement, as that
+         *       will be an irreversible transformation, when you send the resulting [[Elem]] to
+         *       a different party, which doesn't have the original [[elem]]
+         * @note also of note is the fact, that an already prefixed label will not be replaced,
+         *       if only the label matches.
+         *       So, pre:Label will not be matched by "Label", it will be matched though by
+         *       "_:Label", as will every other label of value "Label", regardless of prefix.
+         *       If both are present, the most fitting replacement will be used.
+         *       "pre:Label" over "_:Label" when prefix is given
+         *       "Label" over "_:Label" when the target elem has no prefix
+         * @param renamingPairs a list of string pairs (Tuple2[String, String]), where the first element always
+         *                      describes the label that will be renamed and the corresponding second element is
+         *                      the replacement label.
+         *                      A colon denotes if a value has a prefix or not. E.g. :
+         *                          "pre1:Test" -> "PreTest" will replace the prefixed label with an unprefixed label
+         *                          "preA:A" -> "prefix:LabelA" will replace prfix and label
+         *                          "C" -> "preC:C" adds a prefix to all labels of value "C"
+         * @return the complete structure of [[elem]], where all labels are renamed according to the defined
+         *         renamingPairs
+         */
+        def renameLabels(renamingPairs : (String, String)*): Elem = {
+            val (newMap, keyList, temp) = prepareRenaming(renamingPairs)
+            val res = (temp \\~ ("_", {
+                case Elem(null, lbl, _, _, _*) => keyList.contains(lbl) || keyList.contains(s"_:$lbl")
+                case Elem(pre, lbl, _, _, _*)  => keyList.contains(s"$pre:$lbl") || keyList.contains(s"_:$lbl")
+                case _ => false
+            })).transformTargetRoot {
+                case Elem(null, lbl, att, meta, c @ _*) =>
+                    val (newPre, newLbl) = newMap.getOrElse(lbl, newMap(s"_:$lbl"))
+                    Elem(newPre, newLbl, att, meta, true, c: _*)
+                case Elem(pre, lbl, att, meta, c @ _*)  =>
+                    val (newPre, newLbl) = newMap.getOrElse(s"$pre:$lbl", newMap(s"_:$lbl"))
+                    Elem(newPre, newLbl, att, meta, true, c: _*)
+                case n => n
+            }
+            (res.get \ elem.label).head.asInstanceOf[Elem]
+        }
+    
+        /**
+         * Same as [[renameLabels]], but with all Attributes inside [[elem]].
+         * Same rules concerning the prefixes apply as well
+         * @param renamingPairs a list of string pairs (Tuple2[String, String]), where the first element always
+         *                      describes the key that will be renamed and the corresponding second element is
+         *                      the replacement key.
+         * @return the complete structure of [[elem]], where all Attributes are renamed according to the defined
+         *         renamingPairs
+         */
+        def renameAttributes(renamingPairs : (String, String)*): Elem = {
+            val (newMap, keyList, temp) = prepareRenaming(renamingPairs)
+            val res = (temp \\~ ("_", {
+                case e : Elem => e.attributes.iterator.exists{
+                    case PrefixedAttribute(pre, key, _, _) =>
+                        keyList.contains(s"$pre:$key") || keyList.contains(s"_:$key")
+                    case Attribute(key, _, _) =>
+                        keyList.contains(key) || keyList.contains(s"_:$key")
+                }
+                case _ => false
+            })).transformTargetRoot {
+                case Elem(pre, lbl, att, meta, c @ _*) =>
+                    val newAtt = att.map{
+                        case PrefixedAttribute(pre, key, value, data) =>
+                            val (newPre, newKey) = newMap.getOrElse(s"$pre:$key", newMap(s"_:$key"))
+                            Attribute(Option(newPre), newKey, value, data)
+                        case Attribute(key, value, data) =>
+                            val (newPre, newKey) = newMap.getOrElse(key, newMap(s"_:$key"))
+                            Attribute(Option(newPre), newKey, value, data)
+                        case a => a
+                    }.fold(Null)((soFar, attr) => soFar append attr)
+                    Elem(pre, lbl, newAtt, meta, true, c: _*)
+                case n => n
+            }
+            (res.get \ elem.label).head.asInstanceOf[Elem]
+        }
+    
+        /**
+         * preparation function for [[renameAttributes]] and [[renameLabels]]
+         * @param pairList the input of either [[renameAttributes]] or [[renameLabels]]
+         * @return a [[Tuple3]] with (conversion map, seq of keys for the conversion map, and a temp elem)
+         */
+        private def prepareRenaming(pairList: Seq[(String, String)]) : (Map[String, (String, String)],
+                                                                        Seq[String],
+                                                                        Elem) = {
+            val map = pairList.map{ case (key, value) =>
+                val split               = value.split(':')
+                val prefixedReplacement = if ( split.length == 1 ) (null, value) else (split(0), split(1))
+                (key, prefixedReplacement)
+            }.toMap
+            (map, pairList.map(_._1), <Temp>${elem}</Temp>)
+        }
+        
+        def toPrettyXMLString : String = pp.format(elem)
+        
     }
     
     implicit class NodeWrapper (node: Node) {
-        
-        // todo insert method to transform node names (with or without uri) and key names
-        
         def toPrettyXMLString : String = pp.format(node)
     }
     

@@ -96,11 +96,19 @@ trait WalkableXmlPath {
     def flatMapChildren (f: Node => IterableOnce[Node]) : Option[Elem]
 
     /**
+     * changes the targets, with the children
+     * child nodes can be accessed with the given function
+     * @param f the function that transforms the target node
+     * @return the transformed targets
+     */
+    def transformTarget (f: Elem => Elem): Option[Elem]
+    
+    /**
      * changes only the targets, without the children
      * child nodes can not even be accessed with the given function
      * @param f the function that transforms the target node
      * @return the transformed targets with all the previous children
      */
-    def transformTarget (f: Elem => Elem): Option[Elem]
+    def transformTargetRoot (f: Elem => Elem): Option[Elem]
 
 }
