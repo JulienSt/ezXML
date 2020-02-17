@@ -1,6 +1,6 @@
 package jstengel.ezxml.extension.rt
 
-import jstengel.ezxml.extension.RTWrappers.{ElemWrapper, ObjWrapper}
+import jstengel.ezxml.extension.RTWrappers.{DecodingWrapper, EncodingWrapper}
 import org.scalatest.FlatSpec
 
 import scala.reflect.ClassTag

@@ -227,7 +227,7 @@ object SimpleWrapper {
                     Elem(newPre, newLbl, att, meta, true, c: _*)
                 case n => n
             }
-            (res.get \ elem.label).head.asInstanceOf[Elem]
+            res.get.child.find(_.isInstanceOf[Elem]).get.asInstanceOf[Elem]
         }
     
         /**
