@@ -34,7 +34,7 @@ object RtEncoder {
      * Encodes a class during runtime. This is accomplished via a lot of reflections and is therefore relatively slow
      * (at least compared to the compile time encoding)
      * This functions strength lies in the robustness with abstract types and generic type parameters.
-     * @param a
+     * @param a the object that will be encoded to an [[Elem]]
      * @param mappings FieldMapping to map between fields at runtime.
      *                 Sometimes a field is not accessible via reflection at runtime, therefor these mappings
      *                 can provide an alternative field that holds the same information, but is public
