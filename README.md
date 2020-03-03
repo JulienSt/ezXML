@@ -68,7 +68,6 @@ And the following extra dependencies are needed:
   ```
   // https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
   compile group: 'org.scala-lang', name: 'scala-reflect', version: '2.13.1'
-  compile group: 'org.scala-lang', name: 'scala-compiler', version: '2.13.1'
   ```
 
 ---
