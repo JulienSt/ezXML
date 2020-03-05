@@ -1,6 +1,6 @@
 name := "ezXML"
 
-ThisBuild / organization := "jstengel"
+ThisBuild / organization := "com.github.julienst"
 ThisBuild / version := "0.1"
 ThisBuild / scalaVersion := "2.13.1"
 ThisBuild / libraryDependencies := Seq (
@@ -17,3 +17,19 @@ lazy val extension = (project in file("extension")).dependsOn(core).settings(
 )
 
 lazy val root = (project in file(".")).aggregate(core, extension)
+
+
+ThisBuild / publishTo := sonatypePublishToBundle.value
+ThisBuild / sonatypeProfileName := "JulienSt"
+ThisBuild / licenses := Seq("MIT" -> url("https://raw.githubusercontent.com/JulienSt/ezXML/master/LICENSE"))
+ThisBuild / publishMavenStyle := true
+ThisBuild / homepage := Some(url("https://github.com/julienst/ezxml"))
+ThisBuild / scmInfo := Some(
+    ScmInfo(
+        url("https://github.com/julienst/ezxml"),
+        "scm:https://github.com/JulienSt/ezXML.git"
+        )
+    )
+ThisBuild / developers := List(
+    Developer(id="com.github.julienst", name="Julien Stengel", email="julien.stengel@gmail.com", url=url("https://github.com/julienst"))
+)
