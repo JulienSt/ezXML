@@ -3,14 +3,11 @@ package jstengel.ezxml.extension.mapping
 import jstengel.ezxml.extension.ct.CtEncoder
 import jstengel.ezxml.extension.mapping.MappingExamples.{A, B}
 import jstengel.ezxml.extension.rt.{RtDecoder, RtEncoder}
-import org.junit.runner.RunWith
-import org.scalatest.FlatSpec
-import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.xml.Elem
 
-@RunWith(classOf[JUnitRunner])
-class MappingTest extends FlatSpec {
+class MappingTest extends AnyFlatSpec {
 
     val a                     = new A(23)
     val map : FieldMapping[A] = FieldMapping[A]("field" -> "substitution")

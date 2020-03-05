@@ -5,15 +5,12 @@ import jstengel.ezxml.extension.ExampleClasses
 import jstengel.ezxml.extension.ExampleClasses._
 import jstengel.ezxml.extension.ct.CtDecoder.obj
 import jstengel.ezxml.extension.ct.CtEncoder.{xml, xmlMacro}
-import org.junit.runner.RunWith
-import org.scalatest.FlatSpec
-import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable
 import scala.xml.Elem
 
-@RunWith(classOf[JUnitRunner])
-class CTLoadingTest extends FlatSpec {
+class CTLoadingTest extends AnyFlatSpec {
     
     def testArray[A](orig: Array[A], f: Array[A] => Elem, g: Elem => Array[A]) : Unit = {
         val elem = f(orig)

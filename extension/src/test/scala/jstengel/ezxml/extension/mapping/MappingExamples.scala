@@ -4,7 +4,7 @@ import jstengel.ezxml.core.SimpleWrapper.NodeWrapper
 import jstengel.ezxml.extension.ct.CtEncoder
 import jstengel.ezxml.extension.rt.{RtDecoder, RtEncoder}
 
-import scala.xml.{Elem, Text, UnprefixedAttribute}
+import scala.xml.Elem
 
 /* with this short example the prints should illustrate how the mapping works step by step */
 object MappingExamples extends App {

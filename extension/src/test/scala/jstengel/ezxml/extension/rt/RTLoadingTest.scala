@@ -1,18 +1,14 @@
 package jstengel.ezxml.extension.rt
 
 import jstengel.ezxml.extension.AnnotatedExampleClasses._
-import jstengel.ezxml.extension.ExampleClasses
 import jstengel.ezxml.extension.ExampleClasses._
 import jstengel.ezxml.extension.ExampleClasses
 import jstengel.ezxml.extension.ExampleClasses.{ApplyTest, TestTrait}
-import org.junit.runner.RunWith
-import org.scalatest.FlatSpec
-import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable
 
-@RunWith(classOf[JUnitRunner])
-class RTLoadingTest extends FlatSpec with BasicRtLoadTest {
+class RTLoadingTest extends AnyFlatSpec with BasicRtLoadTest {
     val i: java.lang.Integer = 90
     test(i)
     

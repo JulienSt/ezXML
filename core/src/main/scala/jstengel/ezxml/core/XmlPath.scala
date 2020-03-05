@@ -1,6 +1,6 @@
 package jstengel.ezxml.core
 
-import jstengel.ezxml.core.SimpleWrapper.{ElemWrapper, NodeWrapper}
+import jstengel.ezxml.core.SimpleWrapper.ElemWrapper
 
 import scala.annotation.tailrec
 import scala.xml.{Elem, Node}

@@ -1,10 +1,11 @@
 package jstengel.ezxml.core
 
-import org.scalatest.FlatSpec
 import SimpleWrapper.NodeWrapper
+import org.scalatest.flatspec.AnyFlatSpec
+
 import scala.xml.Elem
 
-trait BasicChangeTest { this: FlatSpec =>
+trait BasicChangeTest { this: AnyFlatSpec =>
     val original : Elem =
         <bla>
             <aaa>

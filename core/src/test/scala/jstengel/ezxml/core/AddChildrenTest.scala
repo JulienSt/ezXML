@@ -1,17 +1,14 @@
 package jstengel.ezxml.core
 
 import SimpleWrapper.ElemWrapper
-import org.junit.runner.RunWith
-import org.scalatest.FlatSpec
-import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.language.postfixOps
 import scala.xml.Elem
 
 
 /* test that the child is added to the correct path */
-@RunWith(classOf[JUnitRunner])
-class BasicAddTest extends FlatSpec with BasicChangeTest {
+class BasicAddTest extends AnyFlatSpec with BasicChangeTest {
     testAdding(_.addChildren(<newChild></newChild>),
                <bla>
                    <aaa>
@@ -38,8 +35,7 @@ class BasicAddTest extends FlatSpec with BasicChangeTest {
 }
 
 /* test that the child is added to the correct path */
-@RunWith(classOf[JUnitRunner])
-class BasicSubAddTest extends FlatSpec with BasicChangeTest {
+class BasicSubAddTest extends AnyFlatSpec with BasicChangeTest {
     testAdding(_ \~ "aaa" \~ "d" addChildren <newChild></newChild> get,
                <bla>
                    <aaa>
@@ -55,8 +51,7 @@ class BasicSubAddTest extends FlatSpec with BasicChangeTest {
 }
 
 /* test that the predicate is used correctly */
-//@RunWith(classOf[JUnitRunner])
-class PredicateAddTest extends FlatSpec with BasicChangeTest {
+class PredicateAddTest extends AnyFlatSpec with BasicChangeTest {
     testAdding(_ \~ "_" \~ ("d", _ \@ "data" == "test") addChildren <newChild></newChild> get,
                <bla>
                    <aaa>
@@ -86,8 +81,7 @@ class PredicateAddTest extends FlatSpec with BasicChangeTest {
 }
 
 /* test that wrong definitions lead to None when trying to add a child */
-@RunWith(classOf[JUnitRunner])
-class WrongPredicateAddTest extends FlatSpec with BasicChangeTest {
+class WrongPredicateAddTest extends AnyFlatSpec with BasicChangeTest {
     "\nTest " should " should return with None, because there is no such child " in {
         assert(original \~ "_" \~ ("d", _ \@ "data" == "nope") addChildren <newChild></newChild> isEmpty)
     }
@@ -97,8 +91,7 @@ class WrongPredicateAddTest extends FlatSpec with BasicChangeTest {
 }
 
 /* test that multiple correct paths lead to multiple add, when no predicate is given */
-@RunWith(classOf[JUnitRunner])
-class MultipleAddTest extends FlatSpec with BasicChangeTest {
+class MultipleAddTest extends AnyFlatSpec with BasicChangeTest {
     testAdding(_ \~ "_" \~ "d" addChildren <newChild></newChild> get,
                              <bla>
                                  <aaa>
@@ -116,8 +109,7 @@ class MultipleAddTest extends FlatSpec with BasicChangeTest {
 }
 
 /* test that multiple possible nodes lead to one correct addition add, when no predicate is given */
-@RunWith(classOf[JUnitRunner])
-class MultipleChoiceAddTest extends FlatSpec with BasicChangeTest {
+class MultipleChoiceAddTest extends AnyFlatSpec with BasicChangeTest {
     override val original : Elem =
         <bla>
             <test/>
@@ -160,8 +152,7 @@ class MultipleChoiceAddTest extends FlatSpec with BasicChangeTest {
 }
 
 /* test that changes are merged correctly */
-@RunWith(classOf[JUnitRunner])
-class MergeChangeTest extends FlatSpec with BasicChangeTest {
+class MergeChangeTest extends AnyFlatSpec with BasicChangeTest {
     override val original : Elem =
         <Test data="test1">
             <Test data="test21">

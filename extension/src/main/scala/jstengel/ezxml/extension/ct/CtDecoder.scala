@@ -1,7 +1,14 @@
 package jstengel.ezxml.extension.ct
 
 import jstengel.ezxml.extension.XmlObjectTrait
-import jstengel.ezxml.extension.ct.CompileTimeReflectHelper._
+import jstengel.ezxml.extension.ct.CompileTimeReflectHelper.{
+    getTypeParams,
+    isObject,
+    isSimple,
+    isConstructedThroughIterable,
+    getConstructorWithTypeMap,
+    getFieldInfo
+}
 
 import scala.collection.mutable
 import scala.language.experimental.macros
@@ -68,9 +75,10 @@ object CtDecoder {
         val typeParams            = getTypeParams(c)(aType)
         val companion             = aTypeSymbol.asClass.companion
         val companionSig          = companion.typeSignature
+        //noinspection ScalaDeprecation
         val isCalledFromCompanion = c.enclosingClass.symbol == companion
         /* I know that c.enclosingClass is deprecated, but that is the best way to check, if the macro was called
-         * from the companion object. */
+         * from the companion object. If there is another way, please submit a pull request */
         
         if (!isCalledFromCompanion && companionSig <:< typeOf[XmlObjectTrait])
             Expr[Elem => A](q"""(elem: scala.xml.Elem) => $companion.${TermName("decode")}(elem)""")

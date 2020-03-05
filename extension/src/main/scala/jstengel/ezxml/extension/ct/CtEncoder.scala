@@ -5,7 +5,6 @@ import jstengel.ezxml.extension.ct.CompileTimeReflectHelper._
 import jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
 
 import scala.language.experimental.macros
-import scala.language.higherKinds
 import scala.reflect.macros.blackbox
 import scala.xml.Elem
 
@@ -378,7 +377,7 @@ object CtEncoder {
     /**
      * creates a function call to RtEncoder.convertToXML
      * @param c         context, to access types and symbols, during compile time
-     * @param tpe
+     * @param tpe       the Type that will be converted at run time
      * @param mappings  an optional expression of [[FieldMappings]] containing all the information
      * @param fieldName this represents a possible field the underlying simple type corresponds to
      * @param ATag      the type of [[A]] as c.Type

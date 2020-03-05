@@ -1,7 +1,7 @@
 package jstengel.ezxml.core
 
 
-import scala.xml._
+import scala.xml.{Elem, Attribute, Text, Null, PrettyPrinter, Node, NodeSeq, PrefixedAttribute}
 
 object SimpleWrapper {
 
@@ -207,7 +207,7 @@ object SimpleWrapper {
          *                      the replacement label.
          *                      A colon denotes if a value has a prefix or not. E.g. :
          *                          "pre1:Test" -> "PreTest" will replace the prefixed label with an unprefixed label
-         *                          "preA:A" -> "prefix:LabelA" will replace prfix and label
+         *                          "preA:A" -> "prefix:LabelA" will replace prefix and label
          *                          "C" -> "preC:C" adds a prefix to all labels of value "C"
          * @return the complete structure of [[elem]], where all labels are renamed according to the defined
          *         renamingPairs

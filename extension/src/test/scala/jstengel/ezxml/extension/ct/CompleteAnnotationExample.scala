@@ -2,7 +2,7 @@ package jstengel.ezxml.extension.ct
 
 import jstengel.ezxml.core.SimpleWrapper.NodeWrapper
 import jstengel.ezxml.extension.XmlClassTrait
-import jstengel.ezxml.extension.ct.CtDecoder._
+import jstengel.ezxml.extension.ct.CtDecoder.obj
 
 class BaseClass(val a: String)
 
@@ -28,7 +28,7 @@ case class ChildClass(override val a : String) extends BaseClass(a)
 
 object ExampleTest extends App {
 
-    val original = new CompleteAnnotationExample("miep", ChildClass("ImplementedClass-output"), 1414)
+    val original = new CompleteAnnotationExample("testString", ChildClass("ImplementedClass-output"), 1414)
     val x        = original.asInstanceOf[XmlClassTrait].encode
     println(x.toPrettyXMLString)
     val decoded = obj[CompleteAnnotationExample](x)

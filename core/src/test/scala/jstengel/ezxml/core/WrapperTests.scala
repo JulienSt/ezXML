@@ -1,14 +1,11 @@
 package jstengel.ezxml.core
 
-import org.junit.runner.RunWith
-import org.scalatest.FlatSpec
-import org.scalatestplus.junit.JUnitRunner
-import SimpleWrapper._
+import org.scalatest.flatspec.AnyFlatSpec
+import SimpleWrapper.ElemWrapper
 
 import scala.xml.Elem
 
-@RunWith(classOf[JUnitRunner])
-class WrapperTests extends FlatSpec {
+class WrapperTests extends AnyFlatSpec {
     val elem: Elem = <A/>
     
     def test(original : Elem, target : Elem, conversionFunction: Elem => Elem): Unit = {

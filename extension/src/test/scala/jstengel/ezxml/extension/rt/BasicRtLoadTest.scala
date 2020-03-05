@@ -1,12 +1,12 @@
 package jstengel.ezxml.extension.rt
 
 import jstengel.ezxml.extension.RTWrappers.{DecodingWrapper, EncodingWrapper}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
-trait BasicRtLoadTest { this: FlatSpec =>
+trait BasicRtLoadTest { this: AnyFlatSpec =>
     def test[A](a: A)(implicit tt : TypeTag[A], ct : ClassTag[A]): Unit = {
         val xml = a.xml
         s"\n$a as ${tt.tpe}" should s" load with $xml at RT" in {assert(a == xml.obj[A].get)}
