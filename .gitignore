@@ -12,3 +12,11 @@ gradlew
 build/
 
 out/
+
+core/target/
+
+extension/target/
+
+project/target/
+
+target/
