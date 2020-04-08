@@ -53,21 +53,24 @@ println(res)
 
 ---
 #### How to integrate this Library
-Currently I only have the first releases on this github page, but I have read somewhere, that github packages are
-a simple solution fot integration.
-For now the only way to integrate this library is by downloading the jars and including them directly.
-(I will update this page, as soon as I worked through github packages)
 
-In any way, if you include this library, the scala-xml_2.13 - version of the standard library has to also be a dependency
-
-https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
-
-If you are using the extension part of this project, then don't forget to set the parameter -Ymacro-annotations
-And the following extra dependencies are needed:
-
+Complete dependencies for just the core:
   ```
+  // https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
+  libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.3.0"
+  libraryDependencies += "com.github.julienst" % "ezxml-core_2.13" % "0.1"
+  ```
+Complete dependencies if the extension is used:
+  ```
+  // https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
+  libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.3.0"
   // https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
-  compile group: 'org.scala-lang', name: 'scala-reflect', version: '2.13.1'
+  libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.13.1"
+
+  libraryDependencies += "com.github.julienst" % "ezxml-core_2.13" % "0.1"
+  libraryDependencies += "com.github.julienst" % "ezxml-extension_2.13" % "0.1"
+
+  scalacOptions += "-Ymacro-annotations"
   ```
 
 ---

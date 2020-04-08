@@ -20,7 +20,6 @@ lazy val root = (project in file(".")).aggregate(core, extension)
 
 
 ThisBuild / publishTo := sonatypePublishToBundle.value
-ThisBuild / sonatypeProfileName := "JulienSt"
 ThisBuild / licenses := Seq("MIT" -> url("https://raw.githubusercontent.com/JulienSt/ezXML/master/LICENSE"))
 ThisBuild / publishMavenStyle := true
 ThisBuild / homepage := Some(url("https://github.com/julienst/ezxml"))
