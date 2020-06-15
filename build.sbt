@@ -17,8 +17,13 @@ lazy val extension = (project in file("extension")).dependsOn(core).settings(
     scalacOptions += "-Ymacro-annotations",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.13.2", // https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
 )
+lazy val macros = (project in file("macros")).dependsOn(core).settings(
+    name := "ezxml.macros",
+    scalacOptions += "-Ymacro-annotations",
+    libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.13.2", // https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
+    )
 
-lazy val root = (project in file(".")).aggregate(core, extension)
+lazy val root = (project in file(".")).aggregate(core, extension, macros)
 
 ThisBuild / publishTo := sonatypePublishToBundle.value
 ThisBuild / licenses := Seq("MIT" -> url("https://raw.githubusercontent.com/JulienSt/ezXML/master/LICENSE"))
