@@ -4,7 +4,7 @@ package jstengel.ezxml.macros
 import scala.reflect.macros.blackbox
 
 
-private[ct] object CompileTimeReflectHelper {
+private[macros] object CompileTimeReflectHelper {
     
     /**
      * a type is considered simple (in this library at least), when it is a sub type of AnyVal, Number, or String

@@ -47,7 +47,7 @@ object CtEncoder {
      */
     def xmlImpl[A](c: blackbox.Context)(a: c.Expr[A])(implicit ATag : c.WeakTypeTag[A]) : c.Expr[Elem] = {
         import c.universe.Quasiquote
-        c.Expr[Elem](q"jstengel.ezxml.macros.ct.CtEncoder.xmlMacro[${ATag.tpe}]($a)")
+        c.Expr[Elem](q"jstengel.ezxml.macros6r.CtEncoder.xmlMacro[${ATag.tpe}]($a)")
     }
     
     /**
@@ -63,7 +63,7 @@ object CtEncoder {
                   (a: c.Expr[A], mappings: c.Expr[FieldMappings])
                   (implicit ATag : c.WeakTypeTag[A]) : c.Expr[Elem] = {
         import c.universe.Quasiquote
-        c.Expr[Elem](q"jstengel.ezxml.macros.ct.CtEncoder.xmlMacro[${ATag.tpe}]($mappings)($a)")
+        c.Expr[Elem](q"jstengel.ezxml.macros.CtEncoder.xmlMacro[${ATag.tpe}]($mappings)($a)")
     }
     
     /**
@@ -219,7 +219,7 @@ object CtEncoder {
                             scala.xml.TopScope,
                             false,
                             objectToBeEncoded.map{e =>
-                                jstengel.ezxml.macros.ct.CtEncoder.xmlMacro[..$typeParams]($m)(e)
+                                jstengel.ezxml.macros.CtEncoder.xmlMacro[..$typeParams]($m)(e)
                             }.toIndexedSeq: _*)"""
                 case None =>
                     q"""(objectToBeEncoded: $aType) => scala.xml.Elem(
@@ -229,7 +229,7 @@ object CtEncoder {
                             scala.xml.TopScope,
                             false,
                             objectToBeEncoded.map{e =>
-                                jstengel.ezxml.macros.ct.CtEncoder.xmlMacro[..$typeParams](e)
+                                jstengel.ezxml.macros.CtEncoder.xmlMacro[..$typeParams](e)
                             }.toIndexedSeq: _*)"""
             }
             
@@ -240,9 +240,8 @@ object CtEncoder {
             encodeIterable(c)(mappings, fieldName, aType, typeParams, fullTypeName)
             
         else if (aType.typeSymbol.isAbstract || mappings.nonEmpty) /* since mapping is runtime dependent */
-             // TODO throw exception
-            ???
-
+             c.abort(c.enclosingPosition, s"Can't do runtime conversions with this library")
+             
         else {
             val (constructor, typeMap, classTypeParams) = getConstructorWithTypeMap(c)(aType, typeParams)
             val fullTypeName                            = createStringRepresentation(aType)(classTypeParams)
@@ -310,7 +309,7 @@ object CtEncoder {
                     else
                         q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
                                 scala.xml.Elem(prefix, label, attribs, scope, false, child ++ jstengel.ezxml.macros
-                                .ct.CtEncoder.xmlMacroAsField[$fieldType]($fName)($fieldCall): _*)"""
+                                .CtEncoder.xmlMacroAsField[$fieldType]($fName)($fieldCall): _*)"""
                 }
             val objectAsElemTree = aType
                 .decls
@@ -321,11 +320,11 @@ object CtEncoder {
                     val targetField = aType.decl(TermName(targetName))
                     val shouldBeEncodedAtRuntime = targetField.typeSignature.typeSymbol.isAbstract
                     if (shouldBeEncodedAtRuntime) {
-                        ??? // TODO throw exception
+                        c.abort(c.enclosingPosition, s"Can't do runtime conversions with this library")
                     } else
                           q"""val scala.xml.Elem(prefix, label, attribs, scope, child @ _*) = $quote
-                               scala.xml.Elem(prefix, label, attribs, scope, false, child ++ jstengel.ezxml.extension
-                               .ct.CtEncoder.xmlMacroAsField[$originalFieldType]($targetName)($fCall): _*)"""
+                               scala.xml.Elem(prefix, label, attribs, scope, false, child ++ jstengel.ezxml.macros
+                               .CtEncoder.xmlMacroAsField[$originalFieldType]($targetName)($fCall): _*)"""
                 }
             q"($objectToBeEncoded: $aType) => $objectAsElemTree"
         })
@@ -351,14 +350,14 @@ object CtEncoder {
         import c.universe.Quasiquote
         /* prohibit StackOverflow at compile time */
         if ( typeParams.length == 1 && aType <:< typeParams.head )
-            ??? // TODO throw exception
+            c.abort(c.enclosingPosition, s"Can't do runtime conversions with this library")
         else
             c.Expr[A => Elem]({
                 val macroLambda = (mappings, typeParams.length) match {
-                    case (Some(m), 1) => q"""jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[..$typeParams]($m)"""
-                    case (None   , 1) => q"""jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[..$typeParams]"""
-                    case (Some(m), _) => q"""jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[(..$typeParams)]($m)"""
-                    case (None   , _) => q"""jstengel.ezxml.extension.ct.CtEncoder.xmlMacro[(..$typeParams)]"""
+                    case (Some(m), 1) => q"""jstengel.ezxml.macros.CtEncoder.xmlMacro[..$typeParams]($m)"""
+                    case (None   , 1) => q"""jstengel.ezxml.macros.CtEncoder.xmlMacro[..$typeParams]"""
+                    case (Some(m), _) => q"""jstengel.ezxml.macros.CtEncoder.xmlMacro[(..$typeParams)]($m)"""
+                    case (None   , _) => q"""jstengel.ezxml.macros.CtEncoder.xmlMacro[(..$typeParams)]"""
                 }
                 q"""(objectToBeEncoded: $aType) => scala.xml.Elem(
                     ${ fieldName.getOrElse(c.Expr[String](q"null")) },

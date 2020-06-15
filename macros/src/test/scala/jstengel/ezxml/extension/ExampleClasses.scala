@@ -28,12 +28,12 @@ object ExampleClasses {
     case class TypeParamTest[A](a: A)
     case class TypeParamTest2[A, B, C](a: A, b: B, c: C)
     
-    class OptionTest(val o: Option[Int]){
-        override def toString : String = s"OpTest($o)"
-        override def equals (obj : Any) : Boolean = obj match {
-            case ot: OptionTest => o == ot.o
-        }
-    }
+//    class OptionTest(val o: Option[Int]){
+//        override def toString : String = s"OpTest($o)"
+//        override def equals (obj : Any) : Boolean = obj match {
+//            case ot: OptionTest => o == ot.o
+//        }
+//    }
     
     case class CC1 (i : Int, s : String)
     case class CC2 (i : Int, s : String)

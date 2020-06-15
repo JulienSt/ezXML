@@ -105,18 +105,18 @@ object CtDecoder {
                     .collectFirst{
                         case m : MethodSymbol if {val name = m.name.toString; name == "from" || name == "fromSeq"} =>
                             q"""(elem: scala.xml.Elem) => {$m( elem.child.map{case (e: scala.xml.Elem) =>
-                                jstengel.ezxml.macros.ct.CtDecoder.obj[$tparam](e)}).asInstanceOf[$aType]}"""
+                                jstengel.ezxml.macros.CtDecoder.obj[$tparam](e)}).asInstanceOf[$aType]}"""
                     }
                     .getOrElse{
                         companionMembers.collectFirst{case apply : MethodSymbol if apply.name.toString == "apply" =>
                             q"""(elem: scala.xml.Elem) => $apply( elem.child.map{case (e: scala.xml.Elem) =>
-                                jstengel.ezxml.macros.ct.CtDecoder.obj[$tparam](e)}: _*)"""
+                                jstengel.ezxml.macros.CtDecoder.obj[$tparam](e)}: _*)"""
                         }.get
                     }
             })
 
         else if (aType.typeSymbol.isAbstract)
-            ??? // TODO throw exception
+            c.abort(c.enclosingPosition, s"Can't do runtime conversions with this library")
         
         else {
             val (constructor, typeMap, _) = getConstructorWithTypeMap(c)(aType, typeParams)
@@ -126,7 +126,7 @@ object CtDecoder {
                 Expr[Elem => A](q"""(elem: scala.xml.Elem) => new $aType()""")
 
             else if (!isCalledFromCompanion && constructor.isPrivate)
-                ??? // TODO throw exception
+                c.abort(c.enclosingPosition, s"Can't do runtime conversions with this library")
                 
             else {
                 val elem             = TermName("elem")
@@ -143,14 +143,12 @@ object CtDecoder {
                             q"""$elem.attributes.collectFirst {
                                     case scala.xml.PrefixedAttribute(_, $fName, scala.xml.Text(value), _) => value
                                 }.get.${tagToFunctionCall(c)(WeakTypeTag(tpe))}"""
-//                        else if (shouldBeEncodedAtRuntime)
-                        // TODO throw exception
                         else if (isRepeated)
-                            q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
+                            q"""jstengel.ezxml.macros.CtDecoder.obj[$tpe](
                                     $elem.child.collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }.get
                                 ):_*"""
                         else
-                            q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
+                            q"""jstengel.ezxml.macros.CtDecoder.obj[$tpe](
                                     $elem.child.collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }.get
                                 )"""
                 }}
@@ -165,10 +163,10 @@ object CtDecoder {
                              val shouldBeEncodedAtRuntime = targetField.typeSignature.typeSymbol.isAbstract
                              
                              if (shouldBeEncodedAtRuntime)
-                                ??? // TODO throw exception
+                                 c.abort(c.enclosingPosition, s"Can't do runtime conversions with this library")
                              else
                                  q"""$res.$fName =
-                                     Some(jstengel.ezxml.macros.ct.CtDecoder.obj[$originalFieldType](
+                                     Some(jstengel.ezxml.macros.CtDecoder.obj[$originalFieldType](
                                          $elem.child.collectFirst{
                                              case c: scala.xml.Elem if c.prefix == $targetName => c
                                          }.get

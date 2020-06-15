@@ -48,20 +48,20 @@ object XMLMacro {
                                              parentList ::: List(tq"jstengel.ezxml.macros.XmlObjectTrait")
                         q"""$mods object $tname extends { ..$earlydefns } with ..$newParents { $self =>
                                 override def decode(elem: scala.xml.Elem) : $tpname[..$tparams] =
-                                    jstengel.ezxml.macros.ct.CtDecoder.obj[$tpname[..$tparams]](elem)
+                                    jstengel.ezxml.macros.CtDecoder.obj[$tpname[..$tparams]](elem)
                             ..$body
                             }"""
                     case _ =>
                         q"""object ${TermName(tpname.toString)} extends jstengel.ezxml.macros.XmlObjectTrait {
                                 override def decode(elem: scala.xml.Elem) : $tpname[..$tparams] =
-                                    jstengel.ezxml.macros.ct.CtDecoder.obj[$tpname[..$tparams]](elem)
+                                    jstengel.ezxml.macros.CtDecoder.obj[$tpname[..$tparams]](elem)
                             }"""
                 }
                 
                 q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with
                     ..$newParents { $self =>
                         override def encode: scala.xml.Elem =
-                            jstengel.ezxml.macros.ct.CtEncoder.xmlMacro[$tpname[..$tparams]](this)
+                            jstengel.ezxml.macros.CtEncoder.xmlMacro[$tpname[..$tparams]](this)
                         ..$stats
                     }
                     ..$newTail"""
