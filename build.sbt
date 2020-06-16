@@ -1,5 +1,7 @@
 name := "ezXML"
 
+enablePlugins(ScalaJSJUnitPlugin)
+
 ThisBuild / organization := "com.github.julienst"
 ThisBuild / version := "0.2"
 ThisBuild / scalaVersion := "2.13.2"
@@ -7,11 +9,7 @@ ThisBuild / scalaVersion := "2.13.2"
 lazy val core = crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .in(file("core"))
-//    .configs(IntegrationTest)
-//    .settings(Defaults.itSettings: _*)
-//    .jsSettings(inConfig(IntegrationTest)(ScalaJSPlugin.testConfigSettings): _*)
     .settings(
-//        unmanagedSourceDirectories in IntegrationTest ++= CrossType.Full.sharedSrcDir(baseDirectory.value, "it").toSeq,
         name := "ezxml.core",
         libraryDependencies := Seq (
             "org.scala-lang.modules" %%% "scala-xml" % "1.3.0", // https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
@@ -24,12 +22,8 @@ lazy val extension = crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .in(file("extension"))
     .dependsOn(core)
-//    .configs(IntegrationTest)
-//    .settings(Defaults.itSettings: _*)
-//    .jsSettings(inConfig(IntegrationTest)(ScalaJSPlugin.testConfigSettings): _*)
     .settings(
-//        unmanagedSourceDirectories in IntegrationTest ++= CrossType.Full.sharedSrcDir(baseDirectory.value, "it").toSeq,
-        name := "ezxml.macros",
+        name := "ezxml.extension",
         libraryDependencies := Seq (
             "org.scala-lang.modules" %%% "scala-xml" % "1.3.0", // https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
             "org.scala-lang" % "scala-reflect" % "2.13.2", // https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
