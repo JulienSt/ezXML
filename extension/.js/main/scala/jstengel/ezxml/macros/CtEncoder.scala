@@ -1,15 +1,9 @@
 package jstengel.ezxml.macros
 
 
-import jstengel.ezxml.macros.mapping.FieldMapping.FieldMappings
-import jstengel.ezxml.macros.CompileTimeReflectHelper.{
-    getTypeParams,
-    isMacroCalledFromEnclosingClass,
-    isSimple,
-    isConstructedThroughIterable,
-    getConstructorWithTypeMap,
-    getFieldInfo
-}
+import jstengel.ezxml.extension.XmlClassTrait
+import jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
+import jstengel.ezxml.macros.CompileTimeReflectHelper.{getConstructorWithTypeMap, getFieldInfo, getTypeParams, isConstructedThroughIterable, isMacroCalledFromEnclosingClass, isSimple}
 
 import scala.reflect.macros.blackbox
 import scala.xml.Elem
@@ -21,8 +15,8 @@ object CtEncoder {
     
     /**
      * creates a conversion from a to an [[Elem]]
-     * @param a the value that will be converted to an [[Elem]]
-     * @param mappings a possible [[FieldMappings]], where cross connections to other fields are cached
+     * @param a        the value that will be converted to an [[Elem]]
+     * @param mappings a possible [[jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings]], where cross connections to other fields are cached
      * @tparam A the type that will be encoded
      * @return
      */

@@ -1,17 +1,12 @@
 package jstengel.ezxml.macros
 
 
+import jstengel.ezxml.extension.XmlObjectTrait
+
 import scala.collection.mutable
 import scala.reflect.macros.blackbox
 import scala.xml.Elem
-import jstengel.ezxml.macros.CompileTimeReflectHelper.{
-    getTypeParams,
-    isSimple,
-    getFieldInfo,
-    getConstructorWithTypeMap,
-    isConstructedThroughIterable,
-    isObject
-}
+import jstengel.ezxml.macros.CompileTimeReflectHelper.{getConstructorWithTypeMap, getFieldInfo, getTypeParams, isConstructedThroughIterable, isObject, isSimple}
 
 
 //noinspection DuplicatedCode
