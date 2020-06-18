@@ -1,9 +1,9 @@
-package jstengel.ezxml.macros
+package jstengel.ezxml.extension.ct
 
 
-import jstengel.ezxml.macros.{CacheXML, Xml, XmlClassTrait}
-import jstengel.ezxml.macros.CtDecoder.obj
-import jstengel.ezxml.macros.CtEncoder.{xml, xmlMacro}
+import jstengel.ezxml.extension.ct.{CacheXML, Xml, XmlClassTrait}
+import jstengel.ezxml.extension.ct.CtDecoder.obj
+import jstengel.ezxml.extension.ct.CtEncoder.{xml, xmlMacro}
 import jstengel.ezxml.core.SimpleWrapper.NodeWrapper
 
 
