@@ -1,10 +1,11 @@
-package jstengel.ezxml.macros
+package jstengel.ezxml.extension.ct
 
-import jstengel.ezxml.macros.AnnotatedExampleClasses._
-import jstengel.ezxml.macros.ExampleClasses._
+import jstengel.ezxml.extension.AnnotatedExampleClasses._
+import jstengel.ezxml.extension.ExampleClasses
+import jstengel.ezxml.extension.ExampleClasses._
+import jstengel.ezxml.extension.ct.CtDecoder.obj
+import jstengel.ezxml.extension.ct.CtEncoder.{xml, xmlMacro}
 import org.scalatest.flatspec.AnyFlatSpec
-import jstengel.ezxml.macros.CtDecoder.obj
-import jstengel.ezxml.macros.CtEncoder.{xml, xmlMacro}
 
 import scala.collection.mutable
 import scala.xml.Elem

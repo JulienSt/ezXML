@@ -1,14 +1,15 @@
-package jstengel.ezxml.macros
+package jstengel.ezxml.extension.ct
 
 
 import scala.reflect.macros.blackbox
 
 
-private[macros] object CompileTimeReflectHelper {
+private[ct] object CompileTimeReflectHelper {
     
     /**
      * a type is considered simple (in this library at least), when it is a sub type of AnyVal, Number, or String
      * and a value of that type can therefor easily be extracted from a String
+     * (mirrors jstengel.ezxml.extension.rt.RuntimeReflectHelper.isSimple)
      * @param c context, to access types and symbols, during compile time
      * @param t the type that will be checked
      * @return true, if the type is a sub type of AnyVal, Number, or String. false if that is not the case
@@ -83,16 +84,18 @@ private[macros] object CompileTimeReflectHelper {
      *         - the actual type of the field
      *         - a correct string representation of that type
      *         - a boolean that is true, if the original field type was a vararg
+     *         - another boolean, that holds the is true if the field was annotated with @RuntimeXML
      */
     def getFieldInfo (c : blackbox.Context)
                      (field                      : c.Symbol,
                       typeMap                    : Map[c.Type, c.Type],
-                      createStringRepresentation : c.Type => String): (String, c.Type, String, Boolean) = {
+                      createStringRepresentation : c.Type => String): (String, c.Type, String, Boolean, Boolean) = {
         val fieldName                = field.name.encodedName.toString
         val fieldTypeSig             = field.typeSignature
         val tempFieldType            = typeMap.getOrElse(fieldTypeSig, fieldTypeSig)
         val tempFieldTypeAsString    = createStringRepresentation(tempFieldType)
         val isRepeated               = tempFieldTypeAsString.startsWith("scala.<repeated>")
+        val shouldBeEncodedAtRuntime = field.annotations.exists(_.toString.contains("RuntimeXML"))
         if ( isRepeated ) {
             val repeatedType       = getTypeParams(c)(tempFieldType).head
             val actualRepeatedType = typeMap.getOrElse(repeatedType, repeatedType)
@@ -107,10 +110,11 @@ private[macros] object CompileTimeReflectHelper {
                 fieldName,
                 fieldTypeAsSeq,
                 s"scala.collection.immutable.Seq[$actualRepeatedType]",
-                isRepeated
+                isRepeated,
+                shouldBeEncodedAtRuntime
             )
         } else
-            (fieldName, tempFieldType, tempFieldTypeAsString, isRepeated)
+            (fieldName, tempFieldType, tempFieldTypeAsString, isRepeated, shouldBeEncodedAtRuntime)
     }
     
     /**

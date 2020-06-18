@@ -145,14 +145,14 @@ object CtDecoder {
                             q"""$elem.attributes.collectFirst {
                                     case scala.xml.PrefixedAttribute(_, $fName, scala.xml.Text(value), _) => value
                                 }.get.${tagToFunctionCall(c)(WeakTypeTag(tpe))}"""
-                        else if (shouldBeEncodedAtRuntime)
-                            q"""jstengel.ezxml.extension.rt.RtDecoder.load[$tpe](
-                                    $elem.child.collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }.get
-                                )"""
                         else if (shouldBeEncodedAtRuntime && isRepeated)
                             q"""jstengel.ezxml.extension.rt.RtDecoder.load[$tpe](
                                     $elem.child.collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }.get
                                 ):_*"""
+                        else if (shouldBeEncodedAtRuntime)
+                            q"""jstengel.ezxml.extension.rt.RtDecoder.load[$tpe](
+                                    $elem.child.collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }.get
+                                )"""
                         else if (isRepeated)
                             q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
                                     $elem.child.collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }.get

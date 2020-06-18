@@ -1,12 +1,12 @@
-package jstengel.ezxml.macros
-
+package jstengel.ezxml.extension.ct
 
 import jstengel.ezxml.extension.XmlObjectTrait
+import jstengel.ezxml.extension.ct.CompileTimeReflectHelper._
 
 import scala.collection.mutable
+import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 import scala.xml.Elem
-import jstengel.ezxml.macros.CompileTimeReflectHelper.{getConstructorWithTypeMap, getFieldInfo, getTypeParams, isConstructedThroughIterable, isObject, isSimple}
 
 
 //noinspection DuplicatedCode
@@ -100,18 +100,18 @@ object CtDecoder {
                     .collectFirst{
                         case m : MethodSymbol if {val name = m.name.toString; name == "from" || name == "fromSeq"} =>
                             q"""(elem: scala.xml.Elem) => {$m( elem.child.map{case (e: scala.xml.Elem) =>
-                                jstengel.ezxml.macros.CtDecoder.obj[$tparam](e)}).asInstanceOf[$aType]}"""
+                                jstengel.ezxml.extension.ct.CtDecoder.obj[$tparam](e)}).asInstanceOf[$aType]}"""
                     }
                     .getOrElse{
                         companionMembers.collectFirst{case apply : MethodSymbol if apply.name.toString == "apply" =>
                             q"""(elem: scala.xml.Elem) => $apply( elem.child.map{case (e: scala.xml.Elem) =>
-                                jstengel.ezxml.macros.CtDecoder.obj[$tparam](e)}: _*)"""
+                                jstengel.ezxml.extension.ct.CtDecoder.obj[$tparam](e)}: _*)"""
                         }.get
                     }
             })
 
         else if (aType.typeSymbol.isAbstract)
-            c.abort(c.enclosingPosition, s"Can't do runtime conversions with this library")
+            Expr[Elem => A](q"""(e: scala.xml.Elem) => jstengel.ezxml.extension.rt.RtDecoder.load[$aType](e)""")
         
         else {
             val (constructor, typeMap, _) = getConstructorWithTypeMap(c)(aType, typeParams)
@@ -121,13 +121,13 @@ object CtDecoder {
                 Expr[Elem => A](q"""(elem: scala.xml.Elem) => new $aType()""")
 
             else if (!isCalledFromCompanion && constructor.isPrivate)
-                c.abort(c.enclosingPosition, s"Can't do runtime conversions with this library")
+                Expr[Elem => A](q"""(e: scala.xml.Elem) => jstengel.ezxml.extension.rt.RtDecoder.load[$aType](e)""")
                 
             else {
                 val elem             = TermName("elem")
                 val loadedParamLists = paramLists.map {
                     _.map { field =>
-                        val (fName, tpe, _, isRepeated) =
+                        val (fName, tpe, _, isRepeated, shouldBeEncodedAtRuntime) =
                             getFieldInfo(c)(field, typeMap, createStringRepresentation(_)())
     
                         if(isSimple(c)(tpe) && tpe <:< typeOf[String])
@@ -138,12 +138,14 @@ object CtDecoder {
                             q"""$elem.attributes.collectFirst {
                                     case scala.xml.PrefixedAttribute(_, $fName, scala.xml.Text(value), _) => value
                                 }.get.${tagToFunctionCall(c)(WeakTypeTag(tpe))}"""
+                        else if (shouldBeEncodedAtRuntime)
+                            c.abort(c.enclosingPosition, s"Can't do runtime conversions when this library is used with ScalaJS")
                         else if (isRepeated)
-                            q"""jstengel.ezxml.macros.CtDecoder.obj[$tpe](
+                            q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
                                     $elem.child.collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }.get
                                 ):_*"""
                         else
-                            q"""jstengel.ezxml.macros.CtDecoder.obj[$tpe](
+                            q"""jstengel.ezxml.extension.ct.CtDecoder.obj[$tpe](
                                     $elem.child.collectFirst{ case c: scala.xml.Elem if c.prefix == $fName => c }.get
                                 )"""
                 }}
@@ -155,13 +157,15 @@ object CtDecoder {
                              val fName             = TermName(cache.name.decodedName.toString)
                              val originalFieldType = getTypeParams(c)(cache.typeSignature.resultType).head
                              val targetField = aType.decl(TermName(targetName))
-                             val shouldBeEncodedAtRuntime = targetField.typeSignature.typeSymbol.isAbstract
+                             val shouldBeEncodedAtRuntime =
+                                 targetField.annotations.exists(_.toString.contains("RuntimeXML")) ||
+                                 targetField.typeSignature.typeSymbol.isAbstract
                              
                              if (shouldBeEncodedAtRuntime)
-                                 c.abort(c.enclosingPosition, s"Can't do runtime conversions with this library")
+                                 c.abort(c.enclosingPosition, s"Can't do runtime conversions when this library is used with ScalaJS")
                              else
                                  q"""$res.$fName =
-                                     Some(jstengel.ezxml.macros.CtDecoder.obj[$originalFieldType](
+                                     Some(jstengel.ezxml.extension.ct.CtDecoder.obj[$originalFieldType](
                                          $elem.child.collectFirst{
                                              case c: scala.xml.Elem if c.prefix == $targetName => c
                                          }.get
@@ -204,3 +208,4 @@ object CtDecoder {
     }
     
 }
+

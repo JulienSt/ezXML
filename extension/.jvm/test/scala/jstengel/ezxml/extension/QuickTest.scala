@@ -51,4 +51,18 @@ object QuickTest extends App {
     println(reverseMap.xml.toPrettyXMLString)
     println(reverseMap.xml.obj[Map[String, String]].get)
     
+    
+    "testInput" match {
+        case extractor(_, _, s) => println(s)
+    }
+    
+}
+
+
+object extractor {
+    
+    def unapply(s: String) = {
+        Some(1, 2, s)
+    }
+    
 }

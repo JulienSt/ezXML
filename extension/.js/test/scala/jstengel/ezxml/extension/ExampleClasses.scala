@@ -1,4 +1,4 @@
-package jstengel.ezxml.macros
+package jstengel.ezxml.extension
 
 object ExampleClasses {
     

@@ -1,7 +1,7 @@
-package jstengel.ezxml.macros
+package jstengel.ezxml.extension
 
-import jstengel.ezxml.macros.{CtDecoder, CtEncoder}
-import jstengel.ezxml.macros.Xml
+import jstengel.ezxml.extension.ct.{CtDecoder, CtEncoder}
+import jstengel.ezxml.extension.ct.Xml
 
 import scala.reflect.ClassTag
 import scala.xml.{Elem, PrefixedAttribute, Text}
@@ -19,7 +19,7 @@ object AnnotatedExampleClasses {
 //                                                        ct2: ClassTag[T2],
 //                                                        tt3: TypeTag[T3],
 //                                                        ct3: ClassTag[T3])
-//        extends jstengel.ezxml.macros.XmlClassTrait {
+//        extends jstengel.ezxml.extension.ct.XmlClassTrait {
 //
 //        val (a1, b1, c1, d1) = (a, b, c, d)
 //
@@ -38,7 +38,7 @@ object AnnotatedExampleClasses {
 //                                                                         ct1: ClassTag[T1],
 //                                                                         tt2: TypeTag[T2],
 //                                                                         ct2: ClassTag[T2])
-//        extends jstengel.ezxml.macros.XmlClassTrait {
+//        extends jstengel.ezxml.extension.ct.XmlClassTrait {
 //        val (a1, b1, c1) = (a, b, c)
 //        override def equals (obj : Any) : Boolean = obj match {
 //            case other : CTSpecialTypeParameterTestClass2[T1, T2] =>
