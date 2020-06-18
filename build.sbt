@@ -1,7 +1,7 @@
 name := "ezXML"
 
 ThisBuild / organization := "com.github.julienst"
-ThisBuild / version := "0.2"
+ThisBuild / version := "0.3"
 ThisBuild / scalaVersion := "2.13.2"
 
 lazy val core = crossProject(JSPlatform, JVMPlatform)
@@ -35,7 +35,7 @@ lazy val extension = crossProject(JSPlatform, JVMPlatform)
 lazy val extensionJVM = extension.jvm
 lazy val extensionJS = extension.js
 
-lazy val ezxml = project.in(file(".")).aggregate(coreJVM, coreJS, extensionJVM, extensionJS)
+lazy val root = project.in(file(".")).aggregate(coreJVM, coreJS, extensionJVM, extensionJS)
 
 ThisBuild / publishTo := sonatypePublishToBundle.value
 ThisBuild / licenses := Seq("MIT" -> url("https://raw.githubusercontent.com/JulienSt/ezXML/master/LICENSE"))
