@@ -5,7 +5,6 @@ ThisBuild / version := "0.1"
 ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / libraryDependencies := Seq (
     "org.scala-lang.modules" %% "scala-xml" % "1.3.0", // https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
-    "junit" % "junit" % "4.13" % Test, // https://mvnrepository.com/artifact/junit/junit
     "org.scalatest" %% "scalatest" % "3.1.2" % Test // https://mvnrepository.com/artifact/org.scalatest/scalatest
     )
 
