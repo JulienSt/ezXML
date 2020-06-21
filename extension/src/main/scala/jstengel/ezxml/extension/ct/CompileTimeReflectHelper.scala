@@ -84,7 +84,7 @@ private[ct] object CompileTimeReflectHelper {
      *         - the actual type of the field
      *         - a correct string representation of that type
      *         - a boolean that is true, if the original field type was a vararg
-     *         - another boolean, that holds the is true if the field was annotated with @RuntimeXML
+     *         - another boolean, that is true if the field was annotated with @RuntimeXML
      */
     def getFieldInfo (c : blackbox.Context)
                      (field                      : c.Symbol,

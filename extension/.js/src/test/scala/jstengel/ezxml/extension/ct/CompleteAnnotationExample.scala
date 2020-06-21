@@ -1,7 +1,7 @@
 package jstengel.ezxml.extension.ct
 
 
-import jstengel.ezxml.extension.ct.{CacheXML, Xml, XmlClassTrait}
+import jstengel.ezxml.extension.ct.{CacheXML, Xml}
 import jstengel.ezxml.extension.ct.CtDecoder.obj
 import jstengel.ezxml.extension.ct.CtEncoder.{xml, xmlMacro}
 import jstengel.ezxml.core.SimpleWrapper.NodeWrapper

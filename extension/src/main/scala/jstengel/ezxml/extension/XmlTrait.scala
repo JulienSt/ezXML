@@ -8,7 +8,7 @@ import scala.xml.Elem
  * This leads to less reflections during runtime and avoids accidentally doubled functions
  */
 trait XmlClassTrait {
-    def encode: Elem
+    def encode(): Elem
 }
 
 /**
