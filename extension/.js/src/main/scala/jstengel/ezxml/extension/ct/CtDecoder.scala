@@ -111,7 +111,10 @@ object CtDecoder {
             })
 
         else if (aType.typeSymbol.isAbstract)
-            Expr[Elem => A](q"""(e: scala.xml.Elem) => jstengel.ezxml.extension.rt.RtDecoder.load[$aType](e)""")
+            c.abort(c.enclosingPosition,
+                    s"Can't do runtime conversions when this library is used with ScalaJS.\n" +
+                    s"You can only convert non abstract classes with the obj-macro.\n" +
+                    s"If you want to convert traits or abstract classes, you should look into the XmlTraits")
         
         else {
             val (constructor, typeMap, _) = getConstructorWithTypeMap(c)(aType, typeParams)
@@ -121,7 +124,10 @@ object CtDecoder {
                 Expr[Elem => A](q"""(elem: scala.xml.Elem) => new $aType()""")
 
             else if (!isCalledFromCompanion && constructor.isPrivate)
-                Expr[Elem => A](q"""(e: scala.xml.Elem) => jstengel.ezxml.extension.rt.RtDecoder.load[$aType](e)""")
+                c.abort(c.enclosingPosition,
+                        s"Can't do runtime conversions when this library is used with ScalaJS.\n" +
+                        s"You can only convert non abstract classes with the obj-macro.\n" +
+                        s"If you want to convert traits or abstract classes, you should look into the XmlTraits")
                 
             else {
                 val elem             = TermName("elem")

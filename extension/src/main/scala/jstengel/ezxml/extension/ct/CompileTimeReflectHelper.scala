@@ -1,6 +1,8 @@
 package jstengel.ezxml.extension.ct
 
 
+import jstengel.ezxml.extension.XmlClassTrait
+
 import scala.reflect.macros.blackbox
 
 
@@ -153,6 +155,12 @@ private[ct] object CompileTimeReflectHelper {
                                   typeParams
         val typeMap         = constrTParams.zip(classTypeParams).toMap
         (constructor, typeMap, classTypeParams)
+    }
+    
+    
+    
+    def extendsXmlClassTrait (c : blackbox.Context)(givenType : c.Type): Boolean = {
+        givenType.typeSymbol.asClass.baseClasses.contains(c.typeOf[XmlClassTrait])
     }
     
 }

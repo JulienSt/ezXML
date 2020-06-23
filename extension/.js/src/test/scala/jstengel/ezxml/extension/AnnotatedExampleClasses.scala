@@ -50,6 +50,37 @@ object AnnotatedExampleClasses {
 //        override def encode : Elem = CtEncoder.xmlMacro[CTSpecialTypeParameterTestClass2[T1, T2]](this)
 //    }
     
+//    trait TestTraitWithExtension { this: XmlClassTrait =>
+//        override def encode () : Elem = ???
+//        val a: String
+//    }
+//    object TestTraitWithExtension extends XmlObjectTrait {
+//        override def decode (elem : Elem) : TestTraitWithExtension with XmlClassTrait = {
+//            if(elem.label.contains(ApplyTestWithExtension.getClass.getName)){
+//                ApplyTestWithExtension.decode(elem)
+//            }
+//            else if(elem.label.contains(NonCaseRuntTimeTestWithExtension.getClass.getName)){
+//                ApplyTestWithExtension.decode(elem)
+//            }
+//            else
+//                ???
+//        }
+//    }
+//
+//    //noinspection NotImplementedCode
+//    @Xml case class ApplyTestWithExtension (a : String, b : Int)
+//        extends TestTraitWithExtension {
+//        def apply(c: Double): Any = ???
+//    }
+//
+//    @Xml class NonCaseRuntTimeTestWithExtension (val bla : Int, val blue : String, val im : ApplyTestWithExtension)
+//        extends TestTraitWithExtension {
+//        override val a : String = "test"
+//        override def equals (obj : Any) : Boolean = obj match {
+//            case nct: NonCaseRuntTimeTestWithExtension => bla == nct.bla && blue == nct.blue && im == nct.im
+//        }
+//    }
+    
     @Xml class AnnotatedStrangeIterator(val id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
         override val iterator : Iterator[(Int, Int)] = it.iterator
         override def equals (obj : Any) : Boolean = obj match {

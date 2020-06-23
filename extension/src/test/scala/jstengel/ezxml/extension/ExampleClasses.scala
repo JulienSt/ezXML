@@ -1,5 +1,6 @@
 package jstengel.ezxml.extension
 
+
 object ExampleClasses {
     
     trait TestTrait {

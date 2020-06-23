@@ -189,8 +189,10 @@ object CtEncoder {
         val typeParams                 = getTypeParams(c)(aType)
         val fullTypeName               = createStringRepresentation(aType)(typeParams)
         val isCalledFromEnclosingClass = isMacroCalledFromEnclosingClass(c)(aType)
-        
-        if (!isCalledFromEnclosingClass && aType <:< typeOf[XmlClassTrait])
+    
+        if (!isCalledFromEnclosingClass &&
+            (aType <:< typeOf[XmlClassTrait] ||
+             aType.typeSymbol.asClass.selfType <:< typeOf[XmlClassTrait]))
             c.Expr[A => Elem](q"""(objectToBeEncoded: $aType) => objectToBeEncoded.${TermName("encode")}""")
             
         else if (isSimple(c)(aType))

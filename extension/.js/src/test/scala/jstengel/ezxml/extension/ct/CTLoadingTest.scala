@@ -123,5 +123,12 @@ class CTLoadingTest extends AnyFlatSpec {
          obj[RTSpecialTypeParameterTestClass1[Int, String, Double]])
     test(RTSpecialTypeParameterTestClass2("test", 1, 1, 2, 3, 4, 5),
          xmlMacro[RTSpecialTypeParameterTestClass2[Int, String]], obj[RTSpecialTypeParameterTestClass2[Int, String]])
-
+    
+    
+//    val applyExtensionTest : TestTraitWithExtension = ApplyTestWithExtension("bla", 123)
+//    test(applyExtensionTest, xmlMacro[TestTraitWithExtension], obj[TestTraitWithExtension])
+//    val nctExtenion: TestTraitWithExtension =
+//        new NonCaseRuntTimeTestWithExtension(12334, "test", applyExtensionTest.asInstanceOf[ApplyTestWithExtension])
+//    test(nctExtenion, xmlMacro[TestTraitWithExtension], obj[TestTraitWithExtension])
+    
 }

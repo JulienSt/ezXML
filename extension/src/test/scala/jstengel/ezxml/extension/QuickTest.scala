@@ -1,14 +1,7 @@
 package jstengel.ezxml.extension
 
-import RTWrappers.{DecodingWrapper, EncodingWrapper}
-import jstengel.ezxml.extension.ct.CtDecoder.obj
-import jstengel.ezxml.extension.ct.CtEncoder.{xml, xmlMacro}
-import jstengel.ezxml.core.SimpleWrapper.NodeWrapper
-import AnnotatedExampleClasses._
-import ExampleClasses._
-import jstengel.ezxml.extension.ct.Xml
+import jstengel.ezxml.extension.ct.{ExtractorMacro, Xml}
 
-import scala.util.Try
 import scala.xml.Elem
 
 /**
@@ -56,19 +49,22 @@ object QuickTest extends App {
 //    println(reverseMap.xml.obj[Map[String, String]].get)
     
     
-    "testInput" match {
-        case extractor(_, _, s) => println(s)
-    }
-
-    new Testclass("bla").encode() match {
-        case Testclass(s) => println(s)
-        case _ =>
-    }
-
-    ExtractionTest("test", 1, 2) match {
-        case ExtractionTest(a, b, c) => println(c)
-        case _ =>
-    }
+//    "testInput" match {
+//        case extractor(_, _, s) => println(s)
+//    }
+//
+//    new Testclass("bla").encode() match {
+//        case Testclass(s) => println(s)
+//        case _ =>
+//    }
+//
+//    ExtractionTest("test", 1, 2) match {
+//        case ExtractionTest(a, b, c) => println(c)
+//        case _ =>
+//    }
+    
+    println(ExtractorMacro.extractor(ExtractionTest("test", 1, 2)))
+    
 }
 
 case class ExtractionTest(a: String, b: Int, private val c: Double)
