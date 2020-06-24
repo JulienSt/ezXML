@@ -63,11 +63,13 @@ object QuickTest extends App {
 //        case _ =>
 //    }
     
-    println(ExtractorMacro.extractor(ExtractionTest("test", 1, 2)))
+    val test: Option[(String, Int, Double)] = ExtractorMacro.extractor[ExtractionTest, (String, Int, Double)](ExtractionTest("test", 1, 2))
+    println(test)
     
 }
 
-case class ExtractionTest(a: String, b: Int, private val c: Double)
+case class ExtractionTest(a: String, b: Int, c: Double)
+
 
 object extractor {
     
@@ -78,12 +80,18 @@ object extractor {
 }
 
 @Xml class Testclass(a: String) extends XmlClassTrait {
-    override def encode(): Elem = ???
+    def encode(): Elem = ???
 }
-object Testclass {
-    def unapply(xml: Elem): Option[String] = {
-        println(xml.label)
-
-        Some("a")
-    }
+object Testclass extends XmlObjectTrait {
+    override def decode (elem : Elem) : Testclass = ???
+    
+    def unapply (arg : Testclass) : Option[String] = Some("a")
+    
+//    def unapply(xml: Elem): Option[String] = {
+//        Some("a")
+////        if (xml.label.contains("Testclass")) {
+////            ExtractorMacro.extractor[Testclass, String](decode(xml))
+////        } else
+////            None
+//    }
 }

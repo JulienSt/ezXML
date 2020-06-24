@@ -17,7 +17,7 @@ class Xml extends StaticAnnotation {
 object XMLMacro {
     
     def impl (c : whitebox.Context)(annottees : c.Expr[Any]*): c.Expr[Any] = {
-        import c.universe.{Quasiquote, TermName, Tree, Modifiers, Flag}
+        import c.universe.{Quasiquote, TermName, Tree, Modifiers, Flag, ValDef}
 //        import c.universe._
 
         val resultAsTree = annottees map ( _.tree ) match {
@@ -45,6 +45,14 @@ object XMLMacro {
 
 //                println(paramss.asInstanceOf[List[Tree]]) // TODO finish extracting types of all non private params
 
+                val constructorTypes =
+                    paramss.asInstanceOf[List[List[Tree]]]
+                           .head
+                           .map(t => t.asInstanceOf[ValDef].tpt)
+                println(constructorTypes)
+//                                      .tpe
+//                                      .typeSymbol)
+                
                 val parentList = parents.asInstanceOf[List[Tree]]
                 val newParents = if (parentList.exists(_.toString.contains("XmlClassTrait")))
                                      parentList
@@ -59,10 +67,15 @@ object XMLMacro {
                                              parentList
                                          else
                                              parentList ::: List(tq"jstengel.ezxml.extension.XmlObjectTrait")
+                        val newObjBody = classBody.asInstanceOf[List[Tree]].filterNot{
+                             case q"$mods def decode(elem: scala.xml.Elem) : $tpt = $expr" =>
+                                 tpt.toString().contains(tpname.toString())
+                             case _ => false
+                        }
                         q"""$mods object $tname extends { ..$earlydefns } with ..$newParents { $self =>
                                 override def decode(elem: scala.xml.Elem) : $tpname[..$tparams] =
                                     jstengel.ezxml.extension.ct.CtDecoder.obj[$tpname[..$tparams]](elem)
-                            ..$body
+                            ..$newObjBody
                             }"""
                     case _ =>
                         q"""object ${TermName(tpname.toString)} extends jstengel.ezxml.extension.XmlObjectTrait {
