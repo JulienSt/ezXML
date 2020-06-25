@@ -49,15 +49,16 @@ object QuickTest extends App {
 //    println(reverseMap.xml.obj[Map[String, String]].get)
     
     
-//    "testInput" match {
-//        case extractor(_, _, s) => println(s)
-//    }
-//
-//    new Testclass("bla").encode() match {
-//        case Testclass(s) => println(s)
-//        case _ =>
-//    }
-//
+    "testInput" match {
+        case extractor(_, _, s) => println(s)
+        case _ =>
+    }
+
+    new TestClass("bla").encode() match {
+        case TestClass(in) => println(in)
+        case _            =>
+    }
+
 //    ExtractionTest("test", 1, 2) match {
 //        case ExtractionTest(a, b, c) => println(c)
 //        case _ =>
@@ -79,19 +80,6 @@ object extractor {
     
 }
 
-@Xml class Testclass(a: String) extends XmlClassTrait {
+@Xml class TestClass (val a : String) extends XmlClassTrait {
     def encode(): Elem = ???
-}
-object Testclass extends XmlObjectTrait {
-    override def decode (elem : Elem) : Testclass = ???
-    
-    def unapply (arg : Testclass) : Option[String] = Some("a")
-    
-//    def unapply(xml: Elem): Option[String] = {
-//        Some("a")
-////        if (xml.label.contains("Testclass")) {
-////            ExtractorMacro.extractor[Testclass, String](decode(xml))
-////        } else
-////            None
-//    }
 }

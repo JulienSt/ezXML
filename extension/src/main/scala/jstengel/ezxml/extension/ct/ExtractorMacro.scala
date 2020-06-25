@@ -15,20 +15,27 @@ object ExtractorMacro {
                         (a: c.Expr[A])
                         (implicit ATag : c.WeakTypeTag[A]) : c.Expr[Option[B]] = {
         import c.universe._
-        val aType = ATag.tpe
-        val tempName = TermName("__tempName__")
-        val functionCalls =
-            aType.decls
-                 .collectFirst{ case m : MethodSymbol if m.isPrimaryConstructor => m }
-                 .get
-                 .paramLists
-                 .head
-                 .map( s => q"$tempName.${s.asInstanceOf[TermSymbol].name}" )
+//        zip type B with the params to find out which param is private and then remove everything, that does not pair up
+        val constructorParams =
+            ATag.tpe
+                .decls
+                .collectFirst{ case m : MethodSymbol if m.isPrimaryConstructor => m }
+                .get
+                .paramLists
+                .head
+//                .filterNot(_.asInstanceOf[ValDef].mods.hasFlag(Flag.PRIVATE)) does not work with valdef, needs to be TermSymbol
         val t =
-            q"""{
-               val $tempName = $a
-               scala.Some(scala.${TermName("Tuple" + functionCalls.size)}.${TermName("apply")}(..$functionCalls))
-               }"""
+            if (constructorParams.length > 1) {
+                val tempName = TermName("__tempName__")
+                val paramCalls = constructorParams.map( s => q"$tempName.${s.asInstanceOf[TermSymbol].name}" )
+                q"""{
+                    val $tempName = $a
+                    scala.Some(scala.${TermName("Tuple" + paramCalls.length)}.${TermName("apply")}(..$paramCalls))
+                }"""
+            } else {
+                val paramCall = constructorParams.map( s => q"$a.${s.asInstanceOf[TermSymbol].name}" ).head
+                q"scala.Some($paramCall)"
+            }
 //        println(t)
         c.Expr[Option[B]](t)
     }

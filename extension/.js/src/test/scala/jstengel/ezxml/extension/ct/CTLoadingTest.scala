@@ -115,7 +115,7 @@ class CTLoadingTest extends AnyFlatSpec {
     val emptyTupleList: List[(Int, String)] = List()
     test(emptyTupleList, xmlMacro[List[(Int, String)]], obj[List[(Int, String)]])
 
-    test(new AnnotatedIntList(1, 2, 3, 4, 5, 6), xmlMacro[AnnotatedIntList], obj[AnnotatedIntList])
+//    test(new AnnotatedIntList(1, 2, 3, 4, 5, 6), xmlMacro[AnnotatedIntList], obj[AnnotatedIntList])
     test(new StrangeIterator("testID", List((1, 2), (3, 4), (5, 6))), xmlMacro[StrangeIterator], obj[StrangeIterator])
 
     test(RTSpecialTypeParameterTestClass1(1, "test", 2, 4.56),

@@ -49,13 +49,14 @@ object AnnotatedExampleClasses {
 //        override def encode : Elem = CtEncoder.xmlMacro[CTSpecialTypeParameterTestClass2[T1, T2]](this)
 //    }
     
-    @Xml class AnnotatedStrangeIterator(val id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
-        override val iterator : Iterator[(Int, Int)] = it.iterator
-        override def equals (obj : Any) : Boolean = obj match {
-            case other: AnnotatedStrangeIterator => iterator.toList == other.iterator.toList && id == other.id
-        }
-        override def toString : String = s"AnnotatedStrangeIterator($id, $it)"
-    }
+    //    TODO enable when extractor is finished.
+//    @Xml class AnnotatedStrangeIterator(val id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
+//        override val iterator : Iterator[(Int, Int)] = it.iterator
+//        override def equals (obj : Any) : Boolean = obj match {
+//            case other: AnnotatedStrangeIterator => iterator.toList == other.iterator.toList && id == other.id
+//        }
+//        override def toString : String = s"AnnotatedStrangeIterator($id, $it)"
+//    }
     
     
     
@@ -89,53 +90,55 @@ object AnnotatedExampleClasses {
 //            case nct: NonCaseRuntTimeTestWithExtension => bla == nct.bla && blue == nct.blue && im == nct.im
 //        }
 //    }
+    
+    //    TODO enable when extractor is finished.
+//    trait IntSet {
+//        def incl(x: Int): IntSet
+//        def contains(x: Int): Boolean
+//        def union(other: IntSet): IntSet
+//    }
+//    object EmptyIntSet extends IntSet {
+//        def contains(x: Int): Boolean = false
+//        def incl(x: Int): IntSet = new NonEmpty(x, EmptyIntSet, EmptyIntSet)
+//        def union(other: IntSet): IntSet = other
+//        override def equals (obj : Any) : Boolean = obj == EmptyIntSet
+//        override def toString = "."
+//    }
+//    @Xml class NonEmpty(elem : Int, left : IntSet, right : IntSet) extends IntSet {
+//
+//        def contains (x : Int) : Boolean =
+//            if ( x < elem ) left contains x
+//            else if ( x > elem ) right contains x
+//            else true
+//
+//        def incl (x : Int) : IntSet =
+//            if ( x < elem ) new NonEmpty(elem, left incl x, right)
+//            else if ( x > elem ) new NonEmpty(elem, left, right incl x)
+//            else this
+//
+//        def union (other : IntSet) : IntSet =
+//            ( ( left union right ) union other ) incl elem
+//
+//        override def equals (obj : Any) : Boolean = obj.toString == toString
+//
+//        override def toString : String = "{" + left + elem + right + "}"
+//
+//    }
 
-    trait IntSet {
-        def incl(x: Int): IntSet
-        def contains(x: Int): Boolean
-        def union(other: IntSet): IntSet
-    }
-    object EmptyIntSet extends IntSet {
-        def contains(x: Int): Boolean = false
-        def incl(x: Int): IntSet = new NonEmpty(x, EmptyIntSet, EmptyIntSet)
-        def union(other: IntSet): IntSet = other
-        override def equals (obj : Any) : Boolean = obj == EmptyIntSet
-        override def toString = "."
-    }
-    @Xml class NonEmpty(elem : Int, left : IntSet, right : IntSet) extends IntSet {
-
-        def contains (x : Int) : Boolean =
-            if ( x < elem ) left contains x
-            else if ( x > elem ) right contains x
-            else true
-
-        def incl (x : Int) : IntSet =
-            if ( x < elem ) new NonEmpty(elem, left incl x, right)
-            else if ( x > elem ) new NonEmpty(elem, left, right incl x)
-            else this
-
-        def union (other : IntSet) : IntSet =
-            ( ( left union right ) union other ) incl elem
-
-        override def equals (obj : Any) : Boolean = obj.toString == toString
-
-        override def toString : String = "{" + left + elem + right + "}"
-
-    }
-
-    @Xml class AnnotatedIntList(val i: Int*) extends Iterable[Int] {
-        override def iterator : Iterator[Int] = i.iterator
-        override def equals (obj : Any) : Boolean = obj match {
-            case other: AnnotatedIntList => iterator.toList == other.iterator.toList
-        }
-    }
-
-    @Xml class AnnotatedPrivateConstructorTest private (val a : Int*) {
-        def this(b: Int) = this(b, b)
-        override def equals (obj : Any) : Boolean = obj match {
-            case other: AnnotatedPrivateConstructorTest => a == other.a
-        }
-        override def toString : String = s"PrivateConstructorTest(${a.mkString(", ")})"
-    }
+//    TODO enable when extractor is finished. Still needs to be converted to Seq
+//    @Xml class AnnotatedIntList(val i: Int*) extends Iterable[Int] {
+//        override def iterator : Iterator[Int] = i.iterator
+//        override def equals (obj : Any) : Boolean = obj match {
+//            case other: AnnotatedIntList => iterator.toList == other.iterator.toList
+//        }
+//    }
+    //    TODO enable when extractor is finished.
+//    @Xml class AnnotatedPrivateConstructorTest private (val a : Int*) {
+//        def this(b: Int) = this(b, b)
+//        override def equals (obj : Any) : Boolean = obj match {
+//            case other: AnnotatedPrivateConstructorTest => a == other.a
+//        }
+//        override def toString : String = s"PrivateConstructorTest(${a.mkString(", ")})"
+//    }
 
 }

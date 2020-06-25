@@ -81,27 +81,27 @@ object AnnotatedExampleClasses {
 //        }
 //    }
     
-    @Xml class AnnotatedStrangeIterator(val id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
-        override val iterator : Iterator[(Int, Int)] = it.iterator
-        override def equals (obj : Any) : Boolean = obj match {
-            case other: AnnotatedStrangeIterator => iterator.toList == other.iterator.toList && id == other.id
-        }
-        override def toString : String = s"AnnotatedStrangeIterator($id, $it)"
-    }
-
-    @Xml class AnnotatedIntList(val i: Int*) extends Iterable[Int] {
-        override def iterator : Iterator[Int] = i.iterator
-        override def equals (obj : Any) : Boolean = obj match {
-            case other: AnnotatedIntList => iterator.toList == other.iterator.toList
-        }
-    }
-
-    @Xml class AnnotatedPrivateConstructorTest private (val a : Int*) {
-        def this(b: Int) = this(b, b)
-        override def equals (obj : Any) : Boolean = obj match {
-            case other: AnnotatedPrivateConstructorTest => a == other.a
-        }
-        override def toString : String = s"PrivateConstructorTest(${a.mkString(", ")})"
-    }
+//    @Xml class AnnotatedStrangeIterator(val id: String, it: List[(Int, Int)]) extends Iterable[(Int, Int)] {
+//        override val iterator : Iterator[(Int, Int)] = it.iterator
+//        override def equals (obj : Any) : Boolean = obj match {
+//            case other: AnnotatedStrangeIterator => iterator.toList == other.iterator.toList && id == other.id
+//        }
+//        override def toString : String = s"AnnotatedStrangeIterator($id, $it)"
+//    }
+//
+//    @Xml class AnnotatedIntList(val i: Int*) extends Iterable[Int] {
+//        override def iterator : Iterator[Int] = i.iterator
+//        override def equals (obj : Any) : Boolean = obj match {
+//            case other: AnnotatedIntList => iterator.toList == other.iterator.toList
+//        }
+//    }
+//
+//    @Xml class AnnotatedPrivateConstructorTest private (val a : Int*) {
+//        def this(b: Int) = this(b, b)
+//        override def equals (obj : Any) : Boolean = obj match {
+//            case other: AnnotatedPrivateConstructorTest => a == other.a
+//        }
+//        override def toString : String = s"PrivateConstructorTest(${a.mkString(", ")})"
+//    }
 
 }

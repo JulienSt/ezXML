@@ -17,7 +17,7 @@ class Xml extends StaticAnnotation {
 object XMLMacro {
     
     def impl (c : whitebox.Context)(annottees : c.Expr[Any]*): c.Expr[Any] = {
-        import c.universe.{Quasiquote, TermName, Tree, Modifiers, Flag, ValDef}
+        import c.universe.{Quasiquote, TermName, Tree, Modifiers, Flag, ValDef, TypeName}
 //        import c.universe._
 
         val resultAsTree = annottees map ( _.tree ) match {
@@ -48,10 +48,20 @@ object XMLMacro {
                 val constructorTypes =
                     paramss.asInstanceOf[List[List[Tree]]]
                            .head
-                           .map(t => t.asInstanceOf[ValDef].tpt)
-                println(constructorTypes)
-//                                      .tpe
-//                                      .typeSymbol)
+                           .flatMap(t => {
+                               val valDef = t.asInstanceOf[ValDef]
+                               if (valDef.mods.hasFlag(Flag.PRIVATE))
+                                   None
+                               else
+                                   Some(valDef.tpt)
+                           })
+                val constructorTupleType =
+                    if (constructorTypes.length > 1){
+                        tq"scala.${TypeName("Tuple" + constructorTypes.length)}[..$constructorTypes]"
+                    } else {
+                        tq"${ constructorTypes.head }"
+                    }
+                val unapplyReturnTypeTree = tq"scala.Option[$constructorTupleType]"
                 
                 val parentList = parents.asInstanceOf[List[Tree]]
                 val newParents = if (parentList.exists(_.toString.contains("XmlClassTrait")))
@@ -67,20 +77,42 @@ object XMLMacro {
                                              parentList
                                          else
                                              parentList ::: List(tq"jstengel.ezxml.extension.XmlObjectTrait")
-                        val newObjBody = classBody.asInstanceOf[List[Tree]].filterNot{
-                             case q"$mods def decode(elem: scala.xml.Elem) : $tpt = $expr" =>
+                        val newObjBody = body.asInstanceOf[List[Tree]].filterNot{
+                             case q"$mods def decode[..$tparams](...$paramss) : $tpt = $expr" =>
+                                 val paramList = paramss.asInstanceOf[List[List[ValDef]]]
+                                 paramList.length == 1 &&
+                                 paramList.head.length == 1 &&
+                                 paramList.head.head.tpt.toString().contains("Elem") &&
                                  tpt.toString().contains(tpname.toString())
+                             case q"$mods def unapply[..$tparams](...$paramss) : $tpt = $expr" =>
+                                 val paramList = paramss.asInstanceOf[List[List[ValDef]]]
+                                 paramList.length == 1 &&
+                                 paramList.head.length == 1 &&
+                                 paramList.head.head.tpt.toString().contains("Elem") &&
+                                 tpt.toString().contains("Option")
                              case _ => false
                         }
                         q"""$mods object $tname extends { ..$earlydefns } with ..$newParents { $self =>
                                 override def decode(elem: scala.xml.Elem) : $tpname[..$tparams] =
                                     jstengel.ezxml.extension.ct.CtDecoder.obj[$tpname[..$tparams]](elem)
-                            ..$newObjBody
+                                def unapply(elem: scala.xml.Elem): $unapplyReturnTypeTree = {
+                                    if (elem.label.contains(${tpname.toString()})) {
+                                        jstengel.ezxml.extension.ct.ExtractorMacro.extractor[$tpname, $constructorTupleType](decode(elem))
+                                    } else
+                                        None
+                                }
+                                ..$newObjBody
                             }"""
                     case _ =>
                         q"""object ${TermName(tpname.toString)} extends jstengel.ezxml.extension.XmlObjectTrait {
                                 override def decode(elem: scala.xml.Elem) : $tpname[..$tparams] =
                                     jstengel.ezxml.extension.ct.CtDecoder.obj[$tpname[..$tparams]](elem)
+                                def unapply(elem: scala.xml.Elem): $unapplyReturnTypeTree = {
+                                    if (elem.label.contains(${tpname.toString()})) {
+                                        jstengel.ezxml.extension.ct.ExtractorMacro.extractor[$tpname, $constructorTupleType](decode(elem))
+                                    } else
+                                        None
+                                    }
                             }"""
                 }
 
