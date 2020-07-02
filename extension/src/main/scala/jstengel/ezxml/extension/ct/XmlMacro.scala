@@ -17,8 +17,7 @@ class Xml extends StaticAnnotation {
 object XMLMacro {
     
     def impl (c : whitebox.Context)(annottees : c.Expr[Any]*): c.Expr[Any] = {
-        import c.universe.{Quasiquote, TermName, Tree, Modifiers, Flag, ValDef, TypeName}
-//        import c.universe._
+        import c.universe.{Quasiquote, TermName, Tree, Modifiers, Flag, ValDef}
 
         val resultAsTree = annottees map ( _.tree ) match {
             case q"""$mods class $tpname[..$tparams] $ctorMods(...$paramss) extends { ..$earlydefns } with ..$parents
@@ -37,31 +36,11 @@ object XMLMacro {
                 if (tparams.asInstanceOf[List[Tree]].nonEmpty)
                     c.abort(c.enclosingPosition,
                             """The class you are trying to annotate has type parameters.
-                              |Due to compilation order, the necessary type information to create the methods
+                              |Due to compilation order, the necessary type information to create the needed methods
                               |is not available. Therefore you have to remove the @Xml annotation again
                               |for your program to compile.
                               |If you need to create a conversion at compile time and cannot use the runtime variants,
                               |you can simply use CtEncoder.xml or CtDecoder.obj""".stripMargin)
-
-//                println(paramss.asInstanceOf[List[Tree]]) // TODO finish extracting types of all non private params
-
-                val constructorTypes =
-                    paramss.asInstanceOf[List[List[Tree]]]
-                           .head
-                           .flatMap(t => {
-                               val valDef = t.asInstanceOf[ValDef]
-                               if (valDef.mods.hasFlag(Flag.PRIVATE))
-                                   None
-                               else
-                                   Some(valDef.tpt)
-                           })
-                val constructorTupleType =
-                    if (constructorTypes.length > 1){
-                        tq"scala.${TypeName("Tuple" + constructorTypes.length)}[..$constructorTypes]"
-                    } else {
-                        tq"${ constructorTypes.head }"
-                    }
-                val unapplyReturnTypeTree = tq"scala.Option[$constructorTupleType]"
                 
                 val parentList = parents.asInstanceOf[List[Tree]]
                 val newParents = if (parentList.exists(_.toString.contains("XmlClassTrait")))
@@ -71,7 +50,7 @@ object XMLMacro {
 
                 /* check for companion object */
                 val newTail = tail match {
-                    case q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$body }" :: _ =>
+                    case q"$mods object $tname extends { ..$earlydefns } with ..$parents { $self => ..$body }" :: x =>
                         val parentList = parents.asInstanceOf[List[Tree]]
                         val newParents = if (parentList.exists(_.toString.contains("XmlObjectTrait")))
                                              parentList
@@ -84,36 +63,18 @@ object XMLMacro {
                                  paramList.head.length == 1 &&
                                  paramList.head.head.tpt.toString().contains("Elem") &&
                                  tpt.toString().contains(tpname.toString())
-                             case q"$mods def unapply[..$tparams](...$paramss) : $tpt = $expr" =>
-                                 val paramList = paramss.asInstanceOf[List[List[ValDef]]]
-                                 paramList.length == 1 &&
-                                 paramList.head.length == 1 &&
-                                 paramList.head.head.tpt.toString().contains("Elem") &&
-                                 tpt.toString().contains("Option")
                              case _ => false
                         }
                         q"""$mods object $tname extends { ..$earlydefns } with ..$newParents { $self =>
                                 override def decode(elem: scala.xml.Elem) : $tpname[..$tparams] =
                                     jstengel.ezxml.extension.ct.CtDecoder.obj[$tpname[..$tparams]](elem)
-                                def unapply(elem: scala.xml.Elem): $unapplyReturnTypeTree = {
-                                    if (elem.label.contains(${tpname.toString()})) {
-                                        jstengel.ezxml.extension.ct.ExtractorMacro.extractor[$tpname, $constructorTupleType](decode(elem))
-                                    } else
-                                        None
-                                }
                                 ..$newObjBody
-                            }"""
+                            }""" :: x
                     case _ =>
                         q"""object ${TermName(tpname.toString)} extends jstengel.ezxml.extension.XmlObjectTrait {
                                 override def decode(elem: scala.xml.Elem) : $tpname[..$tparams] =
                                     jstengel.ezxml.extension.ct.CtDecoder.obj[$tpname[..$tparams]](elem)
-                                def unapply(elem: scala.xml.Elem): $unapplyReturnTypeTree = {
-                                    if (elem.label.contains(${tpname.toString()})) {
-                                        jstengel.ezxml.extension.ct.ExtractorMacro.extractor[$tpname, $constructorTupleType](decode(elem))
-                                    } else
-                                        None
-                                    }
-                            }"""
+                            }""" :: Nil
                 }
 
                 // filter out duplicate encoding functions to make intellij happy

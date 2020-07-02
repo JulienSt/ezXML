@@ -1,6 +1,6 @@
 package jstengel.ezxml.extension
 
-import jstengel.ezxml.extension.ct.{ExtractorMacro, Xml}
+import jstengel.ezxml.extension.ct.{Extract, ExtractorMacro, Xml}
 
 import scala.xml.Elem
 
@@ -54,8 +54,11 @@ object QuickTest extends App {
         case _ =>
     }
 
-    new TestClass("bla").encode() match {
-        case TestClass(in) => println(in)
+    new TestClass("bla", 1, 2, 3).encode() match {
+        case TestClass(in, s :: tail) =>
+            println(in)
+            println(s)
+            println(tail)
         case _            =>
     }
 
@@ -63,10 +66,6 @@ object QuickTest extends App {
 //        case ExtractionTest(a, b, c) => println(c)
 //        case _ =>
 //    }
-    
-    val test: Option[(String, Int, Double)] = ExtractorMacro.extractor[ExtractionTest, (String, Int, Double)](ExtractionTest("test", 1, 2))
-    println(test)
-    
 }
 
 case class ExtractionTest(a: String, b: Int, c: Double)
@@ -80,6 +79,7 @@ object extractor {
     
 }
 
-@Xml class TestClass (val a : String) extends XmlClassTrait {
+@Xml @Extract class TestClass (val a : String, val b: Int*) extends XmlClassTrait {
     def encode(): Elem = ???
 }
+object TestClass

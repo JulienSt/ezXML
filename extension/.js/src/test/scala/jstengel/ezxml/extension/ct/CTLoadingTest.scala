@@ -115,7 +115,7 @@ class CTLoadingTest extends AnyFlatSpec {
     val emptyTupleList: List[(Int, String)] = List()
     test(emptyTupleList, xmlMacro[List[(Int, String)]], obj[List[(Int, String)]])
 
-//    test(new AnnotatedIntList(1, 2, 3, 4, 5, 6), xmlMacro[AnnotatedIntList], obj[AnnotatedIntList])
+    test(new AnnotatedIntList(1, 2, 3, 4, 5, 6), xmlMacro[AnnotatedIntList], obj[AnnotatedIntList])
     test(new StrangeIterator("testID", List((1, 2), (3, 4), (5, 6))), xmlMacro[StrangeIterator], obj[StrangeIterator])
 
     test(RTSpecialTypeParameterTestClass1(1, "test", 2, 4.56),
@@ -125,10 +125,10 @@ class CTLoadingTest extends AnyFlatSpec {
          xmlMacro[RTSpecialTypeParameterTestClass2[Int, String]], obj[RTSpecialTypeParameterTestClass2[Int, String]])
     
     
-//    val applyExtensionTest : TestTraitWithExtension = ApplyTestWithExtension("bla", 123)
-//    test(applyExtensionTest, xmlMacro[TestTraitWithExtension], obj[TestTraitWithExtension])
-//    val nctExtenion: TestTraitWithExtension =
-//        new NonCaseRuntTimeTestWithExtension(12334, "test", applyExtensionTest.asInstanceOf[ApplyTestWithExtension])
-//    test(nctExtenion, xmlMacro[TestTraitWithExtension], obj[TestTraitWithExtension])
+    val applyExtensionTest : TestTraitWithExtension = ApplyTestWithExtension("bla", 123)
+    test(applyExtensionTest, xmlMacro[TestTraitWithExtension], obj[TestTraitWithExtension])
+    val nctExtenion: TestTraitWithExtension =
+        new NonCaseRuntTimeTestWithExtension(12334, "test", applyExtensionTest.asInstanceOf[ApplyTestWithExtension])
+    test(nctExtenion, xmlMacro[TestTraitWithExtension], obj[TestTraitWithExtension])
     
 }
