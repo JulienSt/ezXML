@@ -1,6 +1,6 @@
 package jstengel.ezxml.extension
 
-import jstengel.ezxml.extension.ct.{Extract, ExtractorMacro, Xml}
+import jstengel.ezxml.extension.ct.Xml
 
 import scala.xml.Elem
 
