@@ -54,11 +54,13 @@ object QuickTest extends App {
         case _ =>
     }
 
-    new TestClass("bla", 1, 2, 3).encode() match {
-        case TestClass(in, s :: tail) =>
+    new TestClass2("bla", 1, 2, 3).encode() match {
+        case TestClass(in, s) =>
             println(in)
             println(s)
-            println(tail)
+        case TestClass2(in, s) =>
+            println(in)
+            println(s)
         case _            =>
     }
 
@@ -72,14 +74,17 @@ case class ExtractionTest(a: String, b: Int, c: Double)
 
 
 object extractor {
-    
     def unapply(s: String) = {
         Some(1, 2, s)
     }
-    
 }
 
-@Xml @Extract class TestClass (val a : String, val b: Int*) extends XmlClassTrait {
+@Xml class TestClass (val a : String, val b: Int*) extends XmlClassTrait {
     def encode(): Elem = ???
 }
-object TestClass
+object TestClass extends XmlObjectTrait {
+    override def decode (elem : Elem) : TestClass = ???
+    override def unapply (elem : Elem) : Option[(String, Seq[Int])] = ???
+}
+
+@Xml class TestClass2 (val a : String, val b: Int*)

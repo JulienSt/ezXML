@@ -65,6 +65,7 @@ object AnnotatedExampleClasses {
             else
                 ???
         }
+        def unapply(elem: Elem): Option[_] = ???
     }
 
     //noinspection NotImplementedCode
