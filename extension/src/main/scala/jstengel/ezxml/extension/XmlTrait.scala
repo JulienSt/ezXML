@@ -18,4 +18,5 @@ trait XmlClassTrait {
 trait XmlObjectTrait {
     def decode(elem: Elem): XmlClassTrait
     def unapply(elem: Elem): Option[_]
+    def unapply(elem: String): Option[_]
 }

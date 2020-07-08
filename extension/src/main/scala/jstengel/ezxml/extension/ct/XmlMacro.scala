@@ -61,21 +61,24 @@ object XMLMacro {
                                  val paramList = paramss.asInstanceOf[List[List[ValDef]]]
                                  paramList.length == 1 &&
                                  paramList.head.length == 1 &&
-                                 paramList.head.head.tpt.toString().contains("Elem") &&
+                                 (paramList.head.head.tpt.toString().contains("Elem") ||
+                                  paramList.head.head.tpt.toString().contains("String")) &&
                                  tpt.toString().contains("Option")
                              case _ => false
                         }
                         
                         q"""$mods object $tname extends { ..$earlydefns } with ..$newParents { $self =>
                                 ${createEncode(c)(tpname, tparams)}
-                                ${createUnapply(c)(tpname, paramss)}
+                                ${createXmlUnapply(c)(tpname, paramss)}
+                                ${createStringUnapply(c)(paramss)}
                                 ..$newObjBody
                             }""" :: x
                         
                     case _ =>
                         q"""object ${TermName(tpname.toString)} extends jstengel.ezxml.extension.XmlObjectTrait {
                                 ${createEncode(c)(tpname, tparams)}
-                                ${createUnapply(c)(tpname, paramss)}
+                                ${createXmlUnapply(c)(tpname, paramss)}
+                                ${createStringUnapply(c)(paramss)}
                             }""" :: Nil
                 }
                 
@@ -150,14 +153,26 @@ object XMLMacro {
         }}"""
     }
     
-    def createUnapply(c : whitebox.Context)(tpname: c.TypeName, paramss: List[List[c.universe.ValDef]]): c.Tree = {
+    def createXmlUnapply(c : whitebox.Context)(tpname: c.TypeName, paramss: List[List[c.universe.ValDef]]): c.Tree = {
         import c.universe.Quasiquote
-        q"""override def unapply(elem: scala.xml.Elem): ${ generateUnapplyType(c)(paramss.head) } = {
-            if (elem.label.contains(${tpname.toString}))
-                decode(elem)._extractValues()
-            else
-                None
-        }"""
+        q"""
+            override def unapply(elem: scala.xml.Elem): ${ generateUnapplyType(c)(paramss.head) } =
+                if (elem.label.contains(${tpname.toString}))
+                    decode(elem)._extractValues()
+                else
+                    None
+        """
+    }
+    
+    def createStringUnapply(c : whitebox.Context)(paramss: List[List[c.universe.ValDef]]): c.Tree = {
+        import c.universe.Quasiquote
+        q"""
+            override def unapply (stringElem: String) : ${ generateUnapplyType(c)(paramss.head) } =
+                scala.util.Try(scala.xml.XML.loadString(stringElem)) match {
+                    case scala.util.Success(elem) => unapply(elem)
+                    case scala.util.Failure(_) => None
+                }
+        """
     }
     
 }

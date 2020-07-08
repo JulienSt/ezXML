@@ -5,6 +5,7 @@ import scala.reflect.{ClassTag, api}
 import scala.reflect.runtime.universe.{MethodMirror, MethodSymbol, Mirror, Symbol, Type, TypeRef, TypeTag, internal, typeOf}
 import internal.typeRef
 import jstengel.ezxml.extension.StringTypeTree
+import jstengel.ezxml.extension.XmlBracketDefinition.{ClosingBracket, OpeningBracket, TypeSeparator}
 
 import scala.reflect.runtime.universe
 
@@ -274,7 +275,9 @@ private[rt] object RuntimeReflectHelper {
             val aAsProduct = a.asInstanceOf[Product]
             val n = aAsProduct.productArity
             val typeAsStr =
-                s"scala.Tuple$n[" + aAsProduct.productIterator.map(getType(_).typeSymbol.fullName).mkString(",") + "]"
+                s"scala.Tuple$n$OpeningBracket${
+                    aAsProduct.productIterator.map(getType(_).typeSymbol.fullName).mkString(s"$TypeSeparator")
+                }$ClosingBracket"
             getTypeFromString(typeAsStr)
         }
         
@@ -333,6 +336,8 @@ private[rt] object RuntimeReflectHelper {
         if (typeParams.isEmpty)
             t.typeSymbol.fullName
         else
-            s"${t.typeSymbol.fullName}[${typeParams.map(t => createStringRepresentation(t)()).mkString(",")}]"
+            s"${t.typeSymbol.fullName}$OpeningBracket${
+                typeParams.map(t => createStringRepresentation(t)()).mkString(s"$TypeSeparator")
+            }$ClosingBracket"
     
 }

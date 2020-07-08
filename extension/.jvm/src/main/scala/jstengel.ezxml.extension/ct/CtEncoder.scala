@@ -1,5 +1,6 @@
 package jstengel.ezxml.extension.ct
 
+import jstengel.ezxml.extension.XmlBracketDefinition.{closeBracket, openBracket, separateType}
 import jstengel.ezxml.extension.XmlClassTrait
 import jstengel.ezxml.extension.ct.CompileTimeReflectHelper._
 import jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
@@ -182,7 +183,9 @@ object CtEncoder {
             else if (typeParams.isEmpty)
                 symbol.fullName
             else
-                s"${symbol.fullName}[${typeParams.map(t => createStringRepresentation(t)()).mkString(",")}]"
+                s"${symbol.fullName}$openBracket${
+                    typeParams.map(t => createStringRepresentation(t)()).mkString(s"$separateType")
+                }$closeBracket"
         }
     
         val aType                      = ATag.tpe

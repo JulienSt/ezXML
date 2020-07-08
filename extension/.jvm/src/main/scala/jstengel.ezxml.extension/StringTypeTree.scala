@@ -5,6 +5,10 @@ import StringTypeTree.loadTypeFromClassName
 import scala.collection.mutable
 import scala.reflect.runtime.universe.{Mirror, Type, TypeRef, internal}
 import internal.typeRef
+import XmlBracketDefinition.{ClosingBracket, OpeningBracket, TypeSeparator}
+import StringHelper._
+
+import scala.annotation.tailrec
 
 
 /**
@@ -31,6 +35,8 @@ private class StringTypeTree (parentType : String, val typeParams : List[StringT
 
 private[extension] object StringTypeTree {
     
+    
+    
     /**
      * this apply method creates a StringTypeTree by parsing a className with type parameters
      * @param s the name of the class with tParams in the form of:
@@ -39,22 +45,32 @@ private[extension] object StringTypeTree {
      */
     private def apply (s : String) : StringTypeTree = {
         if ( s.isEmpty ) throw new Exception
-        val (rootType, xmlTypeParamsAsString) = s.span(_ != '[')
+        val (rootType, xmlTypeParamsAsString) = s.splitAt(OpeningBracket)
         val buf                               = mutable.Buffer[String]()
         val stack                             = mutable.Stack[Char]()
         var bracketCount                      = 0
-        xmlTypeParamsAsString.drop(1).dropRight(1).foreach{
-            case ' '                      =>
-            case c @ '['                  => bracketCount += 1
-                                             stack.push(c)
-            case c @ ']'                  => bracketCount -= 1
-                                             stack.push(c)
-            case ',' if bracketCount == 0 => buf.append(stack.popAll().mkString)
-            case c                        => stack.push(c)
+        @tailrec def searchTypeParams (typeString : String): Unit = typeString match {
+            case ' ' :: tail => searchTypeParams(tail)
+            case OpeningBracket ::: tail =>
+                bracketCount += 1
+                stack.pushAll(OpeningBracket)
+                searchTypeParams(tail)
+            case ClosingBracket ::: tail =>
+                bracketCount -= 1
+                stack.pushAll(ClosingBracket)
+                searchTypeParams(tail)
+            case TypeSeparator ::: tail if bracketCount == 0 =>
+                buf.append(stack.popAll().mkString)
+                searchTypeParams(tail)
+            case c :: tail =>
+                stack.push(c)
+                searchTypeParams(tail)
+            case "" =>
         }
-        /* mkString on Seq() produces "", this would be pushed to the buf and therefore wouldn't be empty anymore
-         * therefore the stack is checked beforehand, since popAll produces an empty sequence */
+        searchTypeParams(xmlTypeParamsAsString.drop(OpeningBracket.length).dropRight(ClosingBracket.length))
         if ( stack.nonEmpty )
+            /* mkString on Seq() produces "", this would be pushed to the buf and therefore wouldn't be empty anymore
+             * therefore the stack is checked beforehand, since popAll produces an empty sequence */
             buf.append(stack.popAll().mkString)
         new StringTypeTree(rootType, if ( buf.nonEmpty ) buf.map(apply).toList else List())
     }

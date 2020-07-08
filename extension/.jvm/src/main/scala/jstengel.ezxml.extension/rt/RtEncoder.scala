@@ -6,20 +6,9 @@ import scala.xml.{Attribute, Elem, Null, Text, TopScope}
 import jstengel.ezxml.core.SimpleWrapper.ElemWrapper
 import jstengel.ezxml.extension.mapping.FieldMapping.FieldMappings
 import jstengel.ezxml.extension.XmlClassTrait
-import RuntimeReflectHelper.{
-    NullFlag,
-    arrayType,
-    asArrayType,
-    classTagOf,
-    createStringRepresentation,
-    getType,
-    getTypeFromString,
-    getTypeParams,
-    isConstructorMissing,
-    isSimpleType,
-    iterableType,
-    tagOf
-}
+import RuntimeReflectHelper.{NullFlag, arrayType, asArrayType, classTagOf, createStringRepresentation, getType, getTypeFromString, getTypeParams, isConstructorMissing, isSimpleType, iterableType, tagOf}
+import jstengel.ezxml.extension.XmlBracketDefinition.{ClosingBracket, OpeningBracket}
+import jstengel.ezxml.extension.StringHelper.StringHelperClass
 
 object RtEncoder {
 
@@ -56,7 +45,7 @@ object RtEncoder {
         val className = createStringRepresentation(ttType)(typeParams)
         
         if (ttType <:< savableType) {
-            val Elem(_, l, att, s, c @ _*) = a.asInstanceOf[XmlClassTrait].encode
+            val Elem(_, l, att, s, c @ _*) = a.asInstanceOf[XmlClassTrait].encode()
             Elem(pre, l, att, s, true, c: _*)
         }
         
@@ -96,10 +85,10 @@ object RtEncoder {
                         asList.headOption
                               .map(h => getType(h)(tagOf(typeParam), ClassTag(h.getClass), rm))
                               .getOrElse(typeParam)
-                    val newClassName = className.takeWhile(_ != '[') +
-                                       "[" +
+                    val newClassName = className.takeUntil(OpeningBracket) +
+                                       OpeningBracket +
                                        createStringRepresentation(tupleType)() +
-                                       "]"
+                                       ClosingBracket
                     val seq = asList.map(e => convertToXML(e, mappings)(tagOf(tupleType), ClassTag(e.getClass)))
                     (newClassName, seq)
                 case typeParam :: Nil =>
@@ -108,7 +97,7 @@ object RtEncoder {
                 case paramList =>
                     val n = paramList.length
                     // works for something like Map[Int, String], not something like List[(Int, String)]
-                    val parameterizedTupleName = s"scala.Tuple$n" + className.dropWhile(_ != '[')
+                    val parameterizedTupleName = s"scala.Tuple$n" + className.dropUntil(OpeningBracket)
                     val tupleType = getTypeFromString(parameterizedTupleName)
                     (className, arrayToElemSeq(e => convertToXML(e, mappings)
                                                     (tagOf(tupleType), ClassTag(e.getClass))))

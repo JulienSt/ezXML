@@ -1,7 +1,8 @@
 package jstengel.ezxml.extension.ct
 
 
-import jstengel.ezxml.extension.XmlClassTrait
+import jstengel.ezxml.extension.{XmlBracketDefinition, XmlClassTrait}
+import XmlBracketDefinition.{openBracket, closeBracket}
 
 import scala.reflect.macros.blackbox
 
@@ -111,7 +112,7 @@ private[ct] object CompileTimeReflectHelper {
             (
                 fieldName,
                 fieldTypeAsSeq,
-                s"scala.collection.immutable.Seq[$actualRepeatedType]",
+                s"scala.collection.immutable.Seq$openBracket$actualRepeatedType$closeBracket",
                 isRepeated,
                 shouldBeEncodedAtRuntime
             )

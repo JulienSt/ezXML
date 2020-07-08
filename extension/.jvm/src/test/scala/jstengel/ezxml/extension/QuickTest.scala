@@ -1,8 +1,10 @@
 package jstengel.ezxml.extension
 
+import jstengel.ezxml.extension.QuickTest.string
 import jstengel.ezxml.extension.ct.Xml
 
-import scala.xml.Elem
+import scala.util.Try
+import scala.xml.{Elem, XML}
 
 /**
  * this object is used for quick & dirty tests during development
@@ -48,13 +50,19 @@ object QuickTest extends App {
 //    println(reverseMap.xml.toPrettyXMLString)
 //    println(reverseMap.xml.obj[Map[String, String]].get)
     
+//    val Beginning = "test"
+//
+//    import StringHelper.:::
+//
+//    "testInput" match {
+//        case "te" ::: rest => println(rest)
+////        case extractor(_, _, s) => println(s)
+//        case _ =>
+//    }
+//
+//    println("c".tail)
     
-    "testInput" match {
-        case extractor(_, _, s) => println(s)
-        case _ =>
-    }
-
-    new TestClass2("bla", 1, 2, 3).encode() match {
+    new TestClass2("bla", 1, 2, 3).encode().toString match {
         case TestClass(in, s) =>
             println(in)
             println(s)
@@ -64,6 +72,10 @@ object QuickTest extends App {
         case _            =>
     }
 
+    val string = new TestClass2("bla", 1, 2, 3).encode().toString
+    println(string)
+    println(Try(XML.loadString(string)))
+//
 //    ExtractionTest("test", 1, 2) match {
 //        case ExtractionTest(a, b, c) => println(c)
 //        case _ =>
@@ -73,11 +85,7 @@ object QuickTest extends App {
 case class ExtractionTest(a: String, b: Int, c: Double)
 
 
-object extractor {
-    def unapply(s: String) = {
-        Some(1, 2, s)
-    }
-}
+
 
 @Xml class TestClass (val a : String, val b: Int*) extends XmlClassTrait {
     def encode(): Elem = ???
@@ -85,6 +93,10 @@ object extractor {
 object TestClass extends XmlObjectTrait {
     override def decode (elem : Elem) : TestClass = ???
     override def unapply (elem : Elem) : Option[(String, Seq[Int])] = ???
+    override def unapply (stringElem : String) : Option[(String, Seq[Int])] = ???
 }
 
 @Xml class TestClass2 (val a : String, val b: Int*)
+
+
+

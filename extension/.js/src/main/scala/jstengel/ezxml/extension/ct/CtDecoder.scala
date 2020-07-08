@@ -1,6 +1,7 @@
 package jstengel.ezxml.extension.ct
 
-import jstengel.ezxml.extension.XmlObjectTrait
+import jstengel.ezxml.extension.{XmlBracketDefinition, XmlObjectTrait}
+import XmlBracketDefinition.{openBracket, closeBracket, separateType}
 import jstengel.ezxml.extension.ct.CompileTimeReflectHelper._
 
 import scala.collection.mutable
@@ -58,9 +59,11 @@ object CtDecoder {
             if (symbol.isAbstract && t.baseClasses.length == 1)
                 symbol.name.toString
             else if (typeParams.isEmpty)
-                     symbol.fullName
+                symbol.fullName
             else
-                s"${symbol.fullName}[${typeParams.map(t => createStringRepresentation(t)()).mkString(",")}]"
+                s"${symbol.fullName}$openBracket${
+                    typeParams.map(t => createStringRepresentation(t)()).mkString(s"$separateType")
+                }$closeBracket"
         }
         
         val aType                 = ATag.tpe
