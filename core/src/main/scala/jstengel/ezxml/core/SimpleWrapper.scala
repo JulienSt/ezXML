@@ -1,7 +1,7 @@
 package jstengel.ezxml.core
 
-
-import scala.xml.{Elem, Attribute, Text, Null, PrettyPrinter, Node, NodeSeq, PrefixedAttribute}
+import scala.xml.{Attribute, Elem, MetaData, Node, NodeSeq, Null, PrefixedAttribute, PrettyPrinter, Text, UnprefixedAttribute}
+import HelperFunctions.mergeAttributes
 
 object SimpleWrapper {
 
@@ -37,6 +37,13 @@ object SimpleWrapper {
         def setAttWithPre (pre: String, key : String, value : String) : Elem = {
             elem % Attribute(pre, key, Text(value), Null)
         }
+    
+        /**
+         * Adds multiple [[Attribute]]s to elem at the same time or updates the values of existing keys.
+         * @param attributes attributes, which will be added to elem
+         * @return elem with a newly set attributes
+         */
+        def setAtts (attributes: Attribute*) : Elem = elem % mergeAttributes(attributes: _*)
     
         /**
          * Adds multiple [[Attribute]]s to elem at the same time or updates the values of existing keys.
