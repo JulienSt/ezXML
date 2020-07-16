@@ -1,8 +1,8 @@
 name := "ezXML"
 
 ThisBuild / organization := "com.github.julienst"
-ThisBuild / version := "0.5"
-ThisBuild / scalaVersion := "2.13.2"
+ThisBuild / version := "0.6"
+ThisBuild / scalaVersion := "2.13.3"
 ThisBuild / scalacOptions += "-Ymacro-annotations"
 
 lazy val core = crossProject(JSPlatform, JVMPlatform)
@@ -28,7 +28,7 @@ lazy val extension = crossProject(JSPlatform, JVMPlatform)
         name := "ezxml.extension",
         libraryDependencies := Seq (
             "org.scala-lang.modules" %%% "scala-xml" % "1.3.0", // https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
-            "org.scala-lang" % "scala-reflect" % "2.13.2", // https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
+            "org.scala-lang" % "scala-reflect" % "2.13.3", // https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
             "org.scalatest" %%% "scalatest" % "3.1.2" % Test // https://mvnrepository.com/artifact/org.scalatest/scalatest
         ),
         scalacOptions += "-Ymacro-annotations"
