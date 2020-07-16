@@ -168,10 +168,7 @@ object XMLMacro {
         import c.universe.Quasiquote
         q"""
             override def unapply (stringElem: String) : ${ generateUnapplyType(c)(paramss.head) } =
-                scala.util.Try(scala.xml.XML.loadString(stringElem)) match {
-                    case scala.util.Success(elem) => unapply(elem)
-                    case scala.util.Failure(_) => None
-                }
+                jstengel.ezxml.core.ElemParser.parseElem(stringElem).flatMap(unapply)
         """
     }
     

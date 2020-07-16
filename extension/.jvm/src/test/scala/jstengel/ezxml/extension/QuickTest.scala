@@ -1,5 +1,6 @@
 package jstengel.ezxml.extension
 
+import jstengel.ezxml.core.ElemParser
 import jstengel.ezxml.extension.QuickTest.string
 import jstengel.ezxml.extension.ct.Xml
 
@@ -74,8 +75,9 @@ object QuickTest extends App {
 
     val string = new TestClass2("bla", 1, 2, 3).encode().toString
     println(string)
+    println(jstengel.ezxml.core.ElemParser.parseElem(string))
     println(Try(XML.loadString(string)))
-//
+    
 //    ExtractionTest("test", 1, 2) match {
 //        case ExtractionTest(a, b, c) => println(c)
 //        case _ =>
