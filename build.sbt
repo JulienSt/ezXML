@@ -10,7 +10,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     .in(file("core"))
     .settings(
         name := "ezxml.core",
-        libraryDependencies := Seq (
+        libraryDependencies ++= Seq (
             "com.lihaoyi" %%% "fastparse" % "2.3.0",
             "org.scala-lang.modules" %%% "scala-xml" % "1.3.0", // https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
             "org.scalatest" %%% "scalatest" % "3.1.2" % Test // https://mvnrepository.com/artifact/org.scalatest/scalatest
@@ -26,7 +26,7 @@ lazy val extension = crossProject(JSPlatform, JVMPlatform)
     .dependsOn(core)
     .settings(
         name := "ezxml.extension",
-        libraryDependencies := Seq (
+        libraryDependencies ++= Seq (
             "org.scala-lang.modules" %%% "scala-xml" % "1.3.0", // https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
             "org.scala-lang" % "scala-reflect" % "2.13.3", // https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
             "org.scalatest" %%% "scalatest" % "3.1.2" % Test // https://mvnrepository.com/artifact/org.scalatest/scalatest
