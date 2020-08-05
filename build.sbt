@@ -1,7 +1,7 @@
 name := "ezXML"
 
 ThisBuild / organization := "com.github.julienst"
-ThisBuild / version := "0.6"
+ThisBuild / version := "0.7"
 ThisBuild / scalaVersion := "2.13.3"
 ThisBuild / scalacOptions += "-Ymacro-annotations"
 

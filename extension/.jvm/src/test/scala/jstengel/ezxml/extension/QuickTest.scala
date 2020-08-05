@@ -96,6 +96,7 @@ object TestClass extends XmlObjectTrait {
     override def decode (elem : Elem) : TestClass = ???
     override def unapply (elem : Elem) : Option[(String, Seq[Int])] = ???
     override def unapply (stringElem : String) : Option[(String, Seq[Int])] = ???
+    override def unapply (arg : Any) : Option[(String, Seq[Int])] = ???
 }
 
 @Xml class TestClass2 (val a : String, val b: Int*)

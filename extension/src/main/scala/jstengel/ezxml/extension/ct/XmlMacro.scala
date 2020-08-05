@@ -67,10 +67,26 @@ object XMLMacro {
                              case _ => false
                         }
                         
+                        val existsAnyUnapply = body.asInstanceOf[List[Tree]].exists {
+                            case q"$mods def unapply[..$tparams](...$paramss) : $tpt = $expr" =>
+                                val paramList = paramss.asInstanceOf[List[List[ValDef]]]
+                                paramList.length == 1 &&
+                                paramList.head.length == 1 &&
+                                paramList.head.head.tpt.toString().contains("Any") &&
+                                tpt.toString().contains("Option")
+                        }
+                        
                         q"""$mods object $tname extends { ..$earlydefns } with ..$newParents { $self =>
                                 ${createEncode(c)(tpname, tparams)}
                                 ${createXmlUnapply(c)(tpname, paramss)}
                                 ${createStringUnapply(c)(paramss)}
+                                ${
+                                    // an unapply on any is wide spread enough, that we don't want to overwrite it
+                                    if (existsAnyUnapply)
+                                        q""
+                                    else
+                                        createAnyUnapply(c)(paramss)
+                                }
                                 ..$newObjBody
                             }""" :: x
                         
@@ -79,6 +95,7 @@ object XMLMacro {
                                 ${createEncode(c)(tpname, tparams)}
                                 ${createXmlUnapply(c)(tpname, paramss)}
                                 ${createStringUnapply(c)(paramss)}
+                                ${createAnyUnapply(c)(paramss)}
                             }""" :: Nil
                 }
                 
@@ -169,6 +186,17 @@ object XMLMacro {
         q"""
             override def unapply (stringElem: String) : ${ generateUnapplyType(c)(paramss.head) } =
                 jstengel.ezxml.core.ElemParser.parseElem(stringElem).flatMap(unapply)
+        """
+    }
+    
+    def createAnyUnapply(c : whitebox.Context)(paramss: List[List[c.universe.ValDef]]): c.Tree = {
+        import c.universe.Quasiquote
+        q"""
+            override def unapply (arg : Any) : ${ generateUnapplyType(c)(paramss.head) } = arg match {
+                case elem: scala.xml.Elem => unapply(elem)
+                case elem: String => unapply(elem)
+                case _ => None
+            }
         """
     }
     
