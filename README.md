@@ -58,7 +58,7 @@ Complete dependencies for just the core:
   ```
   // https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.3.0"
-  libraryDependencies += "com.github.julienst" % "ezxml-core_2.13" % "0.1"
+  libraryDependencies += "com.github.julienst" % "ezxml-core_2.13" % "0.6.1"
   ```
 Complete dependencies if the extension is used:
   ```
@@ -67,11 +67,12 @@ Complete dependencies if the extension is used:
   // https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
   libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.13.1"
 
-  libraryDependencies += "com.github.julienst" % "ezxml-core_2.13" % "0.1"
-  libraryDependencies += "com.github.julienst" % "ezxml-extension_2.13" % "0.1"
+  libraryDependencies += "com.github.julienst" % "ezxml-core_2.13" % "0.6.1"
+  libraryDependencies += "com.github.julienst" % "ezxml-extension_2.13" % "0.6.1"
 
   scalacOptions += "-Ymacro-annotations"
   ```
+  This Library is also compatible with Scala.js and could be used to communicate between Server and Client.
 
 ---
 
