@@ -20,3 +20,5 @@ extension/target/
 project/target/
 
 target/
+
+.bsp/

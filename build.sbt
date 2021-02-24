@@ -1,8 +1,8 @@
 name := "ezXML"
 
 ThisBuild / organization := "com.github.julienst"
-ThisBuild / version := "0.7"
-ThisBuild / scalaVersion := "2.13.3"
+ThisBuild / version := "0.8"
+ThisBuild / scalaVersion := "2.13.5"
 ThisBuild / scalacOptions += "-Ymacro-annotations"
 
 lazy val core = crossProject(JSPlatform, JVMPlatform)
@@ -11,9 +11,9 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     .settings(
         name := "ezxml.core",
         libraryDependencies ++= Seq (
-            "com.lihaoyi" %%% "fastparse" % "2.3.0",
+            "com.lihaoyi" %%% "fastparse" % "2.3.1", // https://mvnrepository.com/artifact/com.lihaoyi/fastparse
             "org.scala-lang.modules" %%% "scala-xml" % "1.3.0", // https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
-            "org.scalatest" %%% "scalatest" % "3.1.2" % Test // https://mvnrepository.com/artifact/org.scalatest/scalatest
+            "org.scalatest" %%% "scalatest" % "3.2.5" % Test // https://mvnrepository.com/artifact/org.scalatest/scalatest
         )
     )
     
@@ -28,8 +28,8 @@ lazy val extension = crossProject(JSPlatform, JVMPlatform)
         name := "ezxml.extension",
         libraryDependencies ++= Seq (
             "org.scala-lang.modules" %%% "scala-xml" % "1.3.0", // https://mvnrepository.com/artifact/org.scala-lang.modules/scala-xml
-            "org.scala-lang" % "scala-reflect" % "2.13.3", // https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
-            "org.scalatest" %%% "scalatest" % "3.1.2" % Test // https://mvnrepository.com/artifact/org.scalatest/scalatest
+            "org.scala-lang" % "scala-reflect" % "2.13.5", // https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
+            "org.scalatest" %%% "scalatest" % "3.2.5" % Test // https://mvnrepository.com/artifact/org.scalatest/scalatest
         ),
         scalacOptions += "-Ymacro-annotations"
     )
